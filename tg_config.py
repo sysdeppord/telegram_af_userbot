@@ -1,0 +1,3 @@
+api_id = 00000000
+api_hash = "1a2b3c4d5e6f7g8h9i0j"
+bot_token = "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
