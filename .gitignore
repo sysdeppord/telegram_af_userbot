@@ -1,0 +1,7 @@
+/files/
+/bot/
+*.session
+*.session-journal
+*.db
+test.py
+/downloads/

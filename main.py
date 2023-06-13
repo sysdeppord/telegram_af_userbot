@@ -1,55 +1,63 @@
+import os
 from pyrogram import Client, filters, idle
-from tg_config import api_id, api_hash, bot_token
-from db_engine import Setting
-from user_processor import UserMessages
+from pyrogram.handlers import MessageHandler
+from tg_config import api_id, api_hash, bot_token, setting, name_app, ver_app, system_version, device_model
 from bot_processor import Sorter
+from handlers import user_message
 
-account = "test000"
-u_id = 0
-user = Client(name=account, api_id=api_id, api_hash=api_hash)
-bot = Client("bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
-setting = Setting()
-setting.load_all()
+bot = Client("bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token, workdir="./files/bot")
+users = []
 
 
-def check_my_id():
-    """
-    Check user telegram ID. Need on first run bot.
-    """
-    me = user.get_me()
-    my_id = me.id
-    if my_id == setting.my_id:
-        pass
-    else:
-        setting.add_my_id(my_id)
+def build_user_apps():
+    print("Building users apps")
+    for usr in setting.user_setting:
+        if setting.user_setting[f"{usr}"]["authorised"]:
+            user_id = usr
+            name = f"u{user_id}"
+            if not os.path.exists(f"./files/users/{name}"):
+                os.mkdir(f"./files/users/{name}")
+            users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app + ver_app,
+                                device_model=device_model, system_version=system_version,
+                                workdir=f"./files/users/{name}"))
+    print("OK")
 
 
-@user.on_message(filters.private & ~filters.bot)
-async def user_message(client, message):
-    processor = UserMessages()
-    await processor.forward_logic(user, message, setting)
+def check_and_create_folders():
+    if not os.path.exists("./files"):
+        os.mkdir("./files")
+    if not os.path.exists("./files/bot"):
+        os.mkdir("./files/bot")
+    if not os.path.exists("./files/users"):
+        os.mkdir("./files/users")
 
 
 @bot.on_callback_query()
-async def bot_callback_query(client, callbackdata):
-    processor = Sorter()
-    await processor.callback_filter(bot, user, callbackdata, setting)
+async def bot_callback_query(client, callback_data):
+    processor = Sorter(client, users, callback_data=callback_data)
+    await processor.callback_filter()
 
 
-@bot.on_message(filters.private & ~filters.me)
+@bot.on_message(filters.private & ~filters.me) # old
 async def bot_message(client, message):
-    processor = Sorter()
-    await processor.message_filter(bot, user, message, setting)
+    processor = Sorter(client, users, message=message)
+    await processor.message_filter()
 
-
-if __name__ == '__main__':
-    print('Connecting to telegram account... Please wait...')
-    user.start()
-    print("Connected!")
-    check_my_id()
-    print('Connecting to control panel... Please wait...')
+if __name__ == "__main__":
+    build_user_apps()
+    check_and_create_folders()
+    print("Starting control panel")
     bot.start()
-    print("Connected!")
+    print("OK")
+    print("Trying to run user apps if exist")
+    for user in users:
+        # Add a MessageHandler to each Client and start it
+        user.add_handler(MessageHandler(user_message))
+        print(f"Running {user.name}")
+        user.start()
+        print("OK")
     idle()
-    user.stop()
     bot.stop()
+    for user in users:
+        print(f"Stopping {user.name}")
+        user.stop()

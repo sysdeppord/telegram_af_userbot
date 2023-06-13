@@ -1,3 +1,12 @@
-api_id = 00000000
-api_hash = "1a2b3c4d5e6f7g8h9i0j"
-bot_token = "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+import os
+from db_engine import Setting
+
+setting = Setting()
+api_id = os.environ["api_id"]
+api_hash = os.environ["api_hash"]
+bot_token = os.environ["bot_token"]
+admin_id = int(os.environ["admin_id"])
+ver_app = "v 0.1.0.0 beta"
+name_app = "Forward bot by: @SYSdeppord "
+device_model = "SYSdeppord govno cloud"
+system_version = "Linux chroot on Android"

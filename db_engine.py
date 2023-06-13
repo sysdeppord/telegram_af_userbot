@@ -4,158 +4,173 @@ config_file = "setting.db"
 
 
 class Setting:
-    """my_setting(user, pause, eula, forward_type)"""
-    my_id = None
-    is_pause = 1
-    eula = 0
-    forward_type = ""
-    forward_setting = []
-    """user INTEGER, forward_to INTEGER, enable INTEGER, forward_self INTEGER"""
-    point = ""
-    temp_uid = 0
-    temp_cid = 0
-    temp_callbackdata = None
-    temp_name = ""
+    def __init__(self):
+        self.user_setting = {}
+        self.con = sqlite3.connect(config_file)
+        self.cur = self.con.cursor()
+        self.__load_user_setting()
+        self.__load_forward_setting()
 
-    def load_all(self):
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        print("Loading setting")
-        cur.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='my_setting'")
-        if cur.fetchone()[0] == 1:
+    def __load_user_setting(self):
+        """Check and load main setting from database"""
+        print("Loading user setting")
+        self.cur.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='my_setting'")
+        if self.cur.fetchone()[0] == 1:
             print('table "my_setting" exist.')
         else:
             print('Table "my_setting" does not exist, creating...')
-            cur.execute("CREATE TABLE my_setting(user INTEGER, pause INTEGER, eula INTEGER, forward_type TEXT)")
-            data = [(0, 1, 0, "offline")]
-            cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?)", data)
+            self.cur.execute("CREATE TABLE my_setting(user INTEGER, pause INTEGER, eula INTEGER, forward_type TEXT, "
+                             "authorized INTEGER)")
+            self.con.commit()
             print("Created!")
-
-        cur.execute("PRAGMA table_info('my_setting')")
-        columns = [column[1] for column in cur.fetchall()]
+        self.cur.execute("PRAGMA table_info('my_setting')")
+        columns = [column[1] for column in self.cur.fetchall()]
         if 'forward_type' not in columns:
-            cur.execute("ALTER TABLE my_setting ADD COLUMN forward_type TEXT")
+            self.cur.execute("ALTER TABLE my_setting ADD COLUMN forward_type TEXT")
+            self.con.commit()
         if 'eula' not in columns:
-            cur.execute("ALTER TABLE my_setting ADD COLUMN eula INTEGER")
+            self.cur.execute("ALTER TABLE my_setting ADD COLUMN eula INTEGER")
+            self.con.commit()
+        if 'authorized' not in columns:
+            self.cur.execute("ALTER TABLE my_setting ADD COLUMN authorized INTEGER")
+            self.con.commit()
+        for row in self.cur.execute("SELECT user, pause, eula, forward_type, authorized FROM my_setting ORDER BY user"):
+            self.user_setting.update({f"{row[0]}": {"pause": row[1], "eula": row[2], "forward_type": row[3],
+                                                    "authorised": row[4], "menu_point": "", "temp_uid": 0,
+                                                    "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
+                                                    "forward_setting": {}}})
 
-        for row in cur.execute("SELECT user, pause, eula, forward_type FROM my_setting ORDER BY user"):
-            self.my_id = row[0]
-            self.is_pause = row[1]
-            self.eula = row[2]
-            self.forward_type = row[3]
-        cur.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='forward_setting'")
-        if cur.fetchone()[0] == 1:
-            print('Table "forward_setting" exists.')
-        else:
-            print('Table "forward_setting" does not exist, creating...')
-            cur.execute("CREATE TABLE forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, forward_self"
-                        " INTEGER)")
-            print("Created!")
-        for row in cur.execute("SELECT user, forward_to, enable, forward_self FROM forward_setting ORDER BY user"):
-            self.forward_setting.append(list(row))
-        con.commit()
-        print("All setting loaded!")
+    def __load_forward_setting(self):
+        """Loading user forward setting on start"""
+        print("loading forward setting")
+        if self.user_setting:
+            print("Loading in progress")
+            for user in self.user_setting:
+                for row in self.cur.execute(f"SELECT user, forward_to, enable, forward_self FROM "
+                                            f"u{user}_forward_setting ORDER BY user"):
+                    self.user_setting[f"{user}"]["forward_setting"] = {
+                        f"{row[0]}": {"forward_to": row[1], "enable": row[2], "forward_self": row[3]}}
+        if not self.user_setting:
+            print("EMPTY")
 
-    def forward_update(self):
-        """Need for update configs forwarding"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        self.forward_setting.clear()
-        for row in cur.execute("SELECT user, forward_to, enable, forward_self FROM forward_setting ORDER BY user"):
-            self.forward_setting.append(row)
-        con.commit()
+    def register(self, user_id):
+        """
+        Add new user into database
+        'user_id' - Telegram user id
+        """
+        print(f"Adding user {user_id} into database")
+        data = [(user_id, 1, 0, "offline", 0)]
+        self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)  # todo execute many old
+        self.user_setting.update({f"{user_id}": {"pause": 1, "eula": 0, "forward_type": "offline",
+                                                    "authorised": 0, "menu_point": "", "temp_uid": 0,
+                                                    "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
+                                                    "forward_setting": {}}})
+        print(self.user_setting)
+        print("OK")
+        print(f"Creating forward_setting table for user {user_id}")
+        self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
+                         f"forward_self INTEGER)")
+        self.con.commit()
+        print("OK")
 
-    def main_setting_update(self):
-        """Updating main setting"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        for row in cur.execute(
-                "SELECT user, pause, eula, forward_type FROM my_setting ORDER BY user"):
-            self.my_id = row[0]
-            self.is_pause = row[1]
-            self.eula = row[2]
-            self.forward_type = row[3]
-        con.commit()
+    def authorise(self, user_id):
+        """
+        Select user authorise status into database
+        'user_id' - Telegram user id
+        """
+        sql = f"UPDATE my_setting SET authorized = 1 WHERE user = {user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["authorised"] = 1
 
-    def add_to_forwarding(self, user_id, forward_to):
-        """Adding user and destination channel to forwarding"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
+    def add_to_forwarding(self, user_id, forward_user_id, forward_to):
+        """
+        Adding user and destination channel to forwarding
+        'user_id' - id bot user where adding forwarding
+        'forward_user_id' - chat id user for add to forwarding
+        'forward_to' - channel id where messages forwarding
+        """
         to = forward_to
-        data = [(user_id, to, 1, 1)]
-        cur.executemany("INSERT INTO forward_setting VALUES(?, ?, ?, ?)", data)
-        con.commit()
-        self.forward_update()
+        data = [(forward_user_id, to, 1, 1)]
+        self.cur.executemany(f"INSERT INTO u{user_id}_forward_setting VALUES(?, ?, ?, ?)", data)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["forward_setting"].update({
+            f"{forward_user_id}": {"forward_to": to, "enable": 1, "forward_self": 1}})
 
-    def forward_contact_enable(self, user_id, status):
-        """Adding parameters user | enable/disable forwarding from chat"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE forward_setting SET enable = {status} WHERE user = {user_id}"
-        cur.execute(sql)
-        con.commit()
-        self.forward_update()
+    def forward_contact_enable(self, user_id, forward_user_id, status):
+        """
+        Edit status forwarding for chat. NOT GLOBAL PAUSE FORWARDING!
+        'user_id' - id bot user where use forwarding
+        'forward_user_id' - chat id user for forwarding
+        'status' - 0/1 (INT) disable/enable forwarding from this chat
+        """
+        sql = f"UPDATE u{user_id}_forward_setting SET enable = {status} WHERE user = {forward_user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]["enable"] = status
 
-    def forward_edit_destination(self, user_id, forward_to):
-        """Edit destination channel for forwarding from chat"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE forward_setting SET forward_to = {forward_to} WHERE user = {user_id}"
-        cur.execute(sql)
-        con.commit()
-        self.forward_update()
+    def forward_edit_destination(self, user_id, forward_user_id, forward_to):
+        """
+        Edit destination channel for forwarding from chat
+        'user_id' - id bot user where use forwarding
+        'forward_user_id' - chat id user for forwarding
+        'forward_to' - new channel id to forwarding messages
+        """
+        sql = f"UPDATE u{user_id}_forward_setting SET forward_to = {forward_to} WHERE user = {forward_user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]["forward_to"] = forward_to
 
-    def pause(self, status):
-        """Select pause status of all forwarding (bot run/pause forwarding)"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE my_setting SET pause = {status} WHERE user = {self.my_id}"
-        cur.execute(sql)
-        con.commit()
-        self.main_setting_update()
+    def pause(self, user_id, status):
+        """
+        Select pause status of all forwarding (bot run/pause forwarding)
+        'user_id' - id bot user where use forwarding
+        'status' - 0/1 (INT) disable/enable global forwarding (bot pause)
+        """
+        sql = f"UPDATE my_setting SET pause = {status} WHERE user = {user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["pause"] = status
 
-    def forward_self(self, user_id, status):
-        """Select status of forwarding self messages"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE forward_setting SET forward_self = {status} WHERE user = {user_id}"
-        cur.execute(sql)
-        con.commit()
-        self.forward_update()
+    def forward_self(self, user_id, forward_user_id, status):
+        """
+        Select status of forwarding self messages
+        'user_id' - id bot user where use forwarding
+        'forward_user_id' - chat id user for forwarding
+        'status' - 0/1 (INT) disable/enable forwarding self messages in selected chat
+        """
+        sql = f"UPDATE u{user_id}_forward_setting SET forward_self = {status} WHERE user = {forward_user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]["forward_self"] = status
 
-    def del_forward(self, user_id):
-        """Remove user from forward setting"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"DELETE FROM forward_setting WHERE user = {user_id}"
-        cur.execute(sql)
-        con.commit()
-        self.forward_update()
+    def del_forward(self, user_id, forward_user_id):
+        """
+        Remove user from forward setting (without remove channel where messages forwarded)
+        'user_id' - id bot user where use forwarding
+        'forward_user_id' - chat id user for remove forwarding
+        """
+        sql = f"DELETE FROM u{user_id}_forward_setting WHERE user = {forward_user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        del self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]
 
-    def license_accept(self, status):
-        """Select status of license accept (not used at this moment added for #future)"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE my_setting SET eula = {status} WHERE user = {self.my_id}"
-        # CHECK THIS SHIT (SQL LINE) AFTER ADDING FUNCTION
-        cur.execute(sql)
-        con.commit()
-        self.main_setting_update()
+    def __license_accept(self, user_id, status):
+        """
+        Select status of end user license accept (not used at this moment added for #future)
+        """
+        sql = f"UPDATE my_setting SET eula = {status} WHERE user = {user_id}"
+        # TODO CHECK THIS SHIT (SQL LINE) AFTER ADDING FUNCTION
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["eula"] = status
 
-    def del_all_forwarding(self):
-        """WIPE all forward setting"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = "DELETE FROM forward_setting"
-        cur.execute(sql)
-        con.commit()
-        self.forward_update()
-
-    def add_my_id(self, my_id):
-        """Adding user id to main setting. INT"""
-        con = sqlite3.connect(config_file)
-        cur = con.cursor()
-        sql = f"UPDATE my_setting SET user = {my_id} WHERE user = 0"
-        cur.execute(sql)
-        con.commit()
-        self.main_setting_update()
+    def del_all_forwarding(self, user_id):
+        """
+        WIPE all forward setting for user
+        'user_id' - id bot user to remove forward setting
+        """
+        sql = f"DELETE FROM u{user_id}_forward_setting"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["forward_setting"] = {}
