@@ -183,7 +183,7 @@ class Sorter:
             await not_registered.filter(self.message, self.users)
 
 
-class Processor:  # fixme додавання блядських пересиланні, методи в БД
+class Processor:
 
     def __init__(self, client, message, users, callback_data):
         self.client = client
@@ -196,14 +196,14 @@ class Processor:  # fixme додавання блядських пересила
         if message:
             self.chat_id = message.chat.id
 
-    async def start_message(self):  # TODO
+    async def start_message(self):
         text = "Привет!\nЭто бот для автоматической пересылки!\nДля навигации по меню используй кнопки ниже!"
         keyboard = keyboards.start_message
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.message.reply_text(text, reply_markup=reply_markup)
 
-    async def main_menu(self):  # TODO
+    async def main_menu(self):
         text = "Привет!\nЭто бот для автоматической пересылки!\nДля навигации по меню используй кнопки ниже!"
         keyboard = keyboards.start_message
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -518,7 +518,6 @@ class Processor:  # fixme додавання блядських пересила
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
     async def add_from_forwarded_message_step2(self, user_app):
-        callback_data = setting.user_setting[f"{self.chat_id}"]["temp_callbackdata"]  # todo fix
         if not self.message.forward_from:
             text = "Ты отправил не пересланное сообщение! Попробуй ещё раз... Или же ты отправил сообщение " \
                    "пользователя, у которого скрыта ссылка на аккаунт при пересылке сообщений!\nПопробуй другой" \
@@ -634,11 +633,11 @@ class Processor:  # fixme додавання блядських пересила
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
-    async def help(self):  # TODO
+    async def help(self):
         text = "Пока не доступно"
         await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
 
-    async def status(self):  # TODO
+    async def status(self):
         if setting.user_setting[f"{self.chat_id}"]["pause"]:
             text = "Бот остановлен!"
         if not setting.user_setting[f"{self.chat_id}"]["pause"]:
@@ -654,7 +653,7 @@ class Processor:  # fixme додавання блядських пересила
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
-    async def fbi_open_up(self, user_app):  # FIXME мб проблеми з вайпом через наплив повідомленнь
+    async def fbi_open_up(self, user_app):  # мб проблеми з вайпом через наплив повідомленнь
         text = "Начинаю вайпать к хуям все каналы и базу. ПОДОЖДИ БЛЭТ!"
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         for item in setting.user_setting[f"{self.chat_id}"]["forward_setting"]:
@@ -712,7 +711,7 @@ class Keyboard:
         return keyboard
 
 
-class GetInfo:  # todo fix new setting methods
+class GetInfo:
     """Contain methods for building chats/channels/forwards info"""
     @staticmethod
     async def get_channel_name(client, channel_id):
@@ -791,7 +790,7 @@ class GetInfo:  # todo fix new setting methods
             users_list.append([name, user_id])
         return users_list
 
-    async def build_list(self, user_client, chat_id):  # todo fix new setting methods
+    async def build_list(self, user_client, chat_id):
         """Need to build list of added user chat for forwarding. Return ready info string"""
         forward_setting = setting.user_setting[f"{chat_id}"]["forward_setting"]
         info = "Пользователи которые есть в списке на пересылку и информация о них:\n\n"

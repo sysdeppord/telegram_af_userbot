@@ -60,7 +60,7 @@ class Setting:
         """
         print(f"Adding user {user_id} into database")
         data = [(user_id, 1, 0, "offline", 0)]
-        self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)  # todo execute many old
+        self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)
         self.user_setting.update({f"{user_id}": {"pause": 1, "eula": 0, "forward_type": "offline",
                                                     "authorised": 0, "menu_point": "", "temp_uid": 0,
                                                     "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
@@ -160,7 +160,7 @@ class Setting:
         Select status of end user license accept (not used at this moment added for #future)
         """
         sql = f"UPDATE my_setting SET eula = {status} WHERE user = {user_id}"
-        # TODO CHECK THIS SHIT (SQL LINE) AFTER ADDING FUNCTION
+        # future CHECK THIS SHIT (SQL LINE) AFTER ADDING FUNCTION
         self.cur.execute(sql)
         self.con.commit()
         self.user_setting[f"{user_id}"]["eula"] = status
