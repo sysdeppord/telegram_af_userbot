@@ -518,6 +518,8 @@ class Processor:
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
     async def add_from_forwarded_message_step2(self, user_app):
+        callback_data = setting.user_setting[f"{self.chat_id}"]["temp_callbackdata"]
+        message_id = callback_data.message.id
         if not self.message.forward_from:
             text = "Ты отправил не пересланное сообщение! Попробуй ещё раз... Или же ты отправил сообщение " \
                    "пользователя, у которого скрыта ссылка на аккаунт при пересылке сообщений!\nПопробуй другой" \
@@ -533,7 +535,7 @@ class Processor:
                 await self.message.delete()
             elif not in_list:
                 text = "Подожди пожалуйста, получаю необходимую информацию..."
-                await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
+                await self.client.edit_message_text(chat_id=self.chat_id, message_id=message_id, text=text, reply_markup="")
                 user_to_add = await GetInfo().get_user_name(user_app, from_id)
                 text = f"Добавление пользователя **\"[{user_to_add}](tg://user?id={from_id})\"** в пересылку.\n\n" \
                        f"Теперь выбери нужное действие.\n- Если у тебя нету созданого канала для пересылки сообщений," \
