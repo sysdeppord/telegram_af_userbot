@@ -13,16 +13,17 @@ UA
 
 Як почати:
 Завантаж бота
-В файлі "tg_config.py" заміни всі дані на свої
-При необхідності змінювати дані в боті з іншого аккаунта відредагуй в файлі "bot_processor.py" змінну "admin_id" на свій id другого Телеграм аккаунта
+В файлі "tg_config.py" заміни всі дані на свої (api_id, api_hash, bot_token, admin_id)
 Запусти бота через файл "main.py"
-При першому запуску авторизуйся в свый телеграм аккаунт
-Після авторизації зайди в налаштування телеграм, вибери сесію  з якої ти зайшов в телеграм та вимкни можливість для цієї сесії отримувати дзвінки та секретні чати
+Після запуску перейди в бота та авторизуйся в свій телеграм аккаунт (у версії 1.0.0.0 beta авторизація з хмарним паролем недоступна, на момент авторизації вимкни її)
+Після авторизації зайди в налаштування телеграм, вибери сесію бота з якого ти зайшов в телеграм та вимкни можливість для цієї сесії отримувати дзвінки та секретні чати
 
 Фічі які реалізовані:
+- (NEW!) Авторизація через самого бота (якщо встановлений хмарний пароль то його треба вимкнути на час авторизації)
+- (NEW!) Мультиаккаунт - одна панель управління для кількох користувачів
 - Панель управління через телеграм бота
 - Навігація через кнопки бота не використовуючи команди, окрім як /start
-- Збереження та завантаження налаштувань в базу даних SQLite
+- Збереження та завантаження налаштувань з/в базу даних SQLite
 - Додавання/видалення користувача в пересилку
 - Можливість заморозити/розморозити пересилку окремого користувача незалежно від інших
 - Можливість запустити/зупинити пересилку всіх користувачів (глобально, заморозка/розморозка пересилання окремо по користувачу лишаються незмінними)
@@ -46,8 +47,8 @@ UA
 - - Відео (в тому числі згораємі)
 - - Відео повідомлення (оті кружочки :))
 - - Голосові повідомлення
-- - Повідомлення з каналів
-- - Переслані повідомлення від інших користувачів
+- - Геопозиція (не плутати з маячком)
+- - Переслані повідомлення як від інших користувачів так і з каналів
 - - Стікери
 - - Гіфки
 - - Файли
@@ -73,16 +74,17 @@ You use it at your own peril and risk, I bear no responsibility and do not accep
 
 How to get started:
 Download the bot
-In the "tg_config.py" file, replace all data with your own
-If you need to change data in the bot from another account, edit the "admin_id" variable in the "bot_processor.py" file to your id of the second Telegram account
+In the "tg_config.py" file, replace all data with your own (api_id, api_hash, bot_token, admin_id)
 Run the bot via the "main.py" file
-At the first launch, log in to your Telegram account
-After authorization, go to Telegram settings, select the session from which you entered Telegram and turn off the ability to receive calls and secret chats for this session
+After launch, go to the bot and log in to your Telegram account (in version 1.0.0.0 beta, authorization with a cloud password is not available, turn it off at the time of authorization)
+After authorization, go to Telegram settings, select the session of the bot from which you entered Telegram and turn off the ability for this session to receive calls and secret chats
 
 Implemented features:
+- (NEW!) Authorization through the bot itself (if a cloud password is set, it must be disabled during authorization)
+- (NEW!) Multi-account - one control panel for several users
 - Control panel via Telegram bot
 - Navigate through bot buttons without using commands other than /start
-- Saving and loading settings to the SQLite database
+- Saving and loading settings from/to the SQLite database
 - Add/remove a user to a shipment
 - The ability to freeze/unfreeze the shipment of an individual user independently of others
 - Ability to start/stop forwarding of all users (globally, freezing/unfreezing of forwarding separately by user remains unchanged)
@@ -106,13 +108,13 @@ Implemented features:
 - - Videos (including burned ones)
 - - Video message (those circles :))
 - - Voice messages
-- - Messages from channels
-- - Forwarded messages from other users
+- - Geoposition (not to be confused with a beacon)
+- - Forwarded messages both from other users and from channels
 - - Stickers
 - - Gifs
 - - Files
 - - Media group (there is a nuance, look in possible problems)
-- The online status does not change (invisible, see the explanation in the "possible problems" section)
+- Online status does not change (invisible, see the explanation in the "possible problems" section)
 - The status of reading messages does not change, including for burning photos/videos
 
 Possible problems:
@@ -133,16 +135,17 @@ RU
 
 Как начать:
 Загрузи бота
-В файле "tg_config.py" замени все данные своими
-При необходимости изменять данные в боте с другого аккаунта отредактировать в файле "bot_processor.py" переменную "admin_id" на свой id второго Телеграмм аккаунта
+В файле "tg_config.py" замени все данные на свои (api_id, api_hash, bot_token, admin_id)
 Запусти бота через файл "main.py"
-При первом запуске авторизуйся в свой телеграмм аккаунт
-После авторизации зайди в настройку телеграмм, выбери сессию из которой ты зашел в телеграмм и выключи возможность для этой сессии получать звонки и секретные чаты
+После запуска перейди в бота и авторизуйся в свой телеграмм аккаунт (в версии 1.0.0.0 beta авторизация с облачным паролем недоступна, на момент авторизации выключи ее)
+После авторизации зайди в настройку телеграмм, выбери сессию бота из которого ты зашел в телеграмм и выключи возможность этой сессии получать звонки и секретные чаты
 
 Фичи, которые реализованы:
+- (NEW!) Авторизация через самого бота (если установлен облачный пароль, то его нужно выключить на время авторизации)
+- (NEW!) Мультиаккаунт – одна панель управления для нескольких пользователей
 - панель управления через телеграмм бота
 - Навигация через кнопки бота не используя команды, кроме как /start
-- Сохранение и загрузка настроек в базу данных SQLite
+- Сохранение и загрузка настроек с/у базы данных SQLite
 - Добавление/удаление пользователя в пересылку
 - возможность заморозить/разморозить пересылку отдельного пользователя независимо от других
 - Возможность запустить/остановить пересылку всех пользователей (глобально, заморозка/разморозка пересылки отдельно по пользователю остаются неизменными)
@@ -166,8 +169,8 @@ RU
 - - Видео (в том числе сгораемые)
 - - Видео сообщения (те кружочки :))
 - - Голосовые сообщения
-- - Сообщения по каналам
-- - Пересланные сообщения от других пользователей
+- - геопозиция (не путать с маячком)
+- - Пересланные сообщения как от других пользователей, так и с каналов
 - - Стикеры
 - - Гифки
 - - Файлы
