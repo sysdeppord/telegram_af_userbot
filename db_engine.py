@@ -48,8 +48,8 @@ class Setting:
             for user in self.user_setting:
                 for row in self.cur.execute(f"SELECT user, forward_to, enable, forward_self FROM "
                                             f"u{user}_forward_setting ORDER BY user"):
-                    self.user_setting[f"{user}"]["forward_setting"] = {
-                        f"{row[0]}": {"forward_to": row[1], "enable": row[2], "forward_self": row[3]}}
+                    self.user_setting[f"{user}"]["forward_setting"].update({
+                        f"{row[0]}": {"forward_to": row[1], "enable": row[2], "forward_self": row[3]}})
         if not self.user_setting:
             print("EMPTY")
 
