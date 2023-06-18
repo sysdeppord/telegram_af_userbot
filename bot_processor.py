@@ -1,5 +1,8 @@
 import copy
 import time
+import datetime
+import shutil
+import os
 from pyrogram import Client
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -9,12 +12,12 @@ from tg_config import setting
 from handlers import user_message
 
 apps = []
-release_note = "**СВЕРШИЛОСЬ!**\n" \
-               "- Теперь в боте появилась внутренняя авторизация, без танцев с бубном в терминале. Авторизация " \
-               "доступна только для аккаунтов с выключеным облачным паролем!\n" \
-               "То есть это полноценный мультиаккаунт! Главное внимательно читать инструкцию по каждому шагу...\n" \
+release_note = "Об обновлении:\n" \
+               "- Добавлена з0ащита от авторизации не в свой аккаунт. Ты можешь залогиниться только в тот аккаунт с " \
+               "которого пишешь боту.\n" \
+               "- Пофикшены некоторые мелкие (и не очень) баги.\n" \
                "- Возможно добавлены новые баги..."
-about = f"{name_app} - {ver_app}\nPowered by {device_model}"
+about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
 
 
 class NotRegistered:
@@ -40,7 +43,7 @@ class NotRegistered:
         else:
             await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
 
-    async def filter(self, message, users):
+    async def filter(self, message, users, client):
         user_id = message.from_user.id
         if not setting.user_setting.get(f"{user_id}"):
             setting.register(user_id)
@@ -53,21 +56,25 @@ class NotRegistered:
         elif setting.user_setting[f"{user_id}"]['menu_point'] == "auth_number":
             await self.auth_number(user_id, message)
         elif setting.user_setting[f"{user_id}"]['menu_point'] == "send_code":
-            await self.send_code(message, user_id, users)
+            await self.send_code(message, user_id, users, client)
 
-    async def send_code(self, message, user_id, users):
+    async def send_code(self, message, user_id, users, client):
         v_dig = message.text
         v_dig = v_dig.replace(" ", "")
         if v_dig.isdigit():
             if len(v_dig) == 5:
                 code = v_dig
                 auth = UserAuth()
-                await auth.auth_code(user_id, code)
-                await message.reply_text("Авторизация бота прошла успешно!\n"
+                await auth.auth_code(user_id, code, client)
+                if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
+                    await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
+                                             "отправлено сообщение о попытке входа!")
+                else:
+                    await message.reply_text("Авторизация бота прошла успешно!\n"
                                          "Внесение данных в базу аккаунтов и запуск бота, подожди немного...")
-                setting.authorise(user_id)
-                await self.run_userbot(user_id, users)
-                await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
+                    setting.authorise(user_id)
+                    await self.run_userbot(user_id, users)
+                    await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
             else:
                 await message.reply_text(f"Код авторизации не содержит 5 цифр, количество цифр в твоём коде "
                                          f"\"{len(v_dig)}\"\nПопробуй ввести код ещё раз!")
@@ -180,7 +187,7 @@ class Sorter:
                 await self.processor.upd_end()
         elif not await get_info.is_register(self.user_id):
             not_registered = NotRegistered()
-            await not_registered.filter(self.message, self.users)
+            await not_registered.filter(self.message, self.users, self.client)
 
 
 class Processor:
@@ -646,6 +653,7 @@ class Processor:
             text = "Бот остановлен!"
         if not setting.user_setting[f"{self.chat_id}"]["pause"]:
             text = "Бот запущен!"
+        text += f"\nВ пересылке сейчас {len(setting.user_setting[f'{self.chat_id}']['forward_setting'])} пользователей."
         await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
 
     async def burn_all(self):
@@ -831,16 +839,39 @@ class UserAuth:
 
     @staticmethod
     async def create_app(user_id, phone_number):
-        app = Client(f"u{user_id}", api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
-                     device_model=device_model, system_version=system_version)
+        name = f"u{user_id}"
+        if not os.path.exists(f"./files/users/{name}"):
+            os.mkdir(f"./files/users/{name}")
+        app = Client(f"{name}", api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
+                     device_model=device_model, system_version=system_version, workdir=f"./files/users/{name}")
         await app.connect()
         sc = await app.send_code(phone_number=phone_number)
         apps.append([app, sc, phone_number])
 
     @staticmethod
-    async def auth_code(user_id, phone_code):
+    async def auth_code(user_id, phone_code, bot):
         for app in apps:
             if app[0].name == f"u{user_id}":
                 pch = app[1].phone_code_hash
                 await app[0].sign_in(phone_number=app[2], phone_code_hash=pch, phone_code=phone_code)
-                await app[0].disconnect()
+                info = await app[0].get_me()
+                if info.id != user_id:
+                    setting.user_setting[f"{user_id}"]["temp_data"] = "not_self_id"
+                    setting.user_setting[f"{user_id}"]["menu_point"] = ""
+                    tg_info = await bot.get_users(user_id)
+                    if tg_info.last_name:
+                        name = f"{tg_info.first_name} {tg_info.last_name}"
+                    else:
+                        name = tg_info.first_name
+                    text = f"Произошла попытка несанкцонированого в твой аккаунт входа через @CP_forward_bot, " \
+                           f"авторизация отклонена!\n\nИнформация о пользователе, который пытался авторизоваться:\n" \
+                           f"Имя установленое в телеграм: **[{name}](tg://user?id={user_id})**\n" \
+                           f"ID Телеграмм аккаунта: `{user_id}`\n" \
+                           f"Юзернейм (если установлен): @{tg_info.username}\n" \
+                           f"Время входа: --{datetime.datetime.now()}--"
+                    await app[0].send_message("me", text)
+                    await app[0].disconnect()
+                    shutil.rmtree(f"./files/users/u{user_id}")
+
+                else:
+                    await app[0].disconnect()

@@ -36,7 +36,7 @@ class Setting:
             self.con.commit()
         for row in self.cur.execute("SELECT user, pause, eula, forward_type, authorized FROM my_setting ORDER BY user"):
             self.user_setting.update({f"{row[0]}": {"pause": row[1], "eula": row[2], "forward_type": row[3],
-                                                    "authorised": row[4], "menu_point": "", "temp_uid": 0,
+                                                    "authorised": row[4], "menu_point": "", "temp_data": "", "temp_uid": 0,
                                                     "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
                                                     "forward_setting": {}}})
 
@@ -58,20 +58,15 @@ class Setting:
         Add new user into database
         'user_id' - Telegram user id
         """
-        print(f"Adding user {user_id} into database")
         data = [(user_id, 1, 0, "offline", 0)]
         self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)
         self.user_setting.update({f"{user_id}": {"pause": 1, "eula": 0, "forward_type": "offline",
                                                     "authorised": 0, "menu_point": "", "temp_uid": 0,
                                                     "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
                                                     "forward_setting": {}}})
-        print(self.user_setting)
-        print("OK")
-        print(f"Creating forward_setting table for user {user_id}")
         self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
                          f"forward_self INTEGER)")
         self.con.commit()
-        print("OK")
 
     def authorise(self, user_id):
         """
