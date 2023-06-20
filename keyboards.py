@@ -15,6 +15,8 @@ add = [
     [InlineKeyboardButton("👉💬 Выберу чат с пользователем", callback_data="add_from_exist_chat_step1")],
     [InlineKeyboardButton("👉👤 Выберу из списка контактов", callback_data="add_from_sync_contact_step1")],
     [InlineKeyboardButton("🔃💬 Перешлю его сообщение", callback_data="add_from_forwarded_message_step1")],
+    [InlineKeyboardButton("🔃📰 Добавить в пересылку канал", callback_data="add_to_forward_channel")],
+    [InlineKeyboardButton("🔃👥 Добавить в пересылку группу", callback_data="add_to_forward_group")],
     [InlineKeyboardButton("⚙️ Назад в меню настроек", callback_data="setting")],
     [InlineKeyboardButton("🏠 Назад в главное меню", callback_data="main_menu")]
 ]

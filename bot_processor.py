@@ -15,6 +15,8 @@ apps = []
 release_note = "Об обновлении:\n" \
                "- Добавлена з0ащита от авторизации не в свой аккаунт. Ты можешь залогиниться только в тот аккаунт с " \
                "которого пишешь боту.\n" \
+               "- Добавлена возможность пересылать сообщения сканалов и групп (бесед), даже если там установлен флаг" \
+               " приватности, который запрещает скачивание\копирование материалов.\n" \
                "- Пофикшены некоторые мелкие (и не очень) баги.\n" \
                "- Возможно добавлены новые баги..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
@@ -144,12 +146,18 @@ class Sorter:
             await self.processor.unfreeze_step2(user_app)
         elif data.startswith("change_destination_"):
             await self.processor.change_destination_step2(user_app)
+        elif data.startswith("select_channel_"):
+            await self.processor.change_destination_step3(user_app)
         elif data.startswith("exist_chat_"):
             await self.processor.add_from_exist_chat_step2(user_app)
         elif data.startswith("sync_contact_"):
             await self.processor.add_from_sync_contact_step2(user_app)
         elif data.startswith("forward_my_step2_"):
             await self.processor.forward_my_step2(user_app)
+        elif data.startswith("add_to_forward_channel") or data.startswith("add_to_forward_group"):
+            await self.processor.add_to_forward_cg_step1(user_app)
+        elif data.startswith("add_cg_"):
+            await self.processor.add_to_forward_cg_step2(user_app)
         elif data == "add_from_send_contact_step1":
             await self.processor.add_from_send_contact_step1()
         elif data == "add_from_exist_chat_step1":
@@ -407,6 +415,49 @@ class Processor:
         keyboard = keyboards.bottom_button
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
+
+    async def add_to_forward_cg_step1(self, user_app):
+        if self.callback_data.data == "add_to_forward_channel":
+            text = "Идёт подготовка списка каналов на добавление в пересылку. Подожди немного..."
+            flag = "channel"
+        if self.callback_data.data == "add_to_forward_group":
+            text = "Идёт подготовка списка групп на добавление в пересылку. Подожди немного..."
+            flag = "group"
+        await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                            reply_markup="")
+        cg_list = await GetInfo().build_chat_list(user_app, flag)
+        text = "Выбери пересылку от какого пользователя разморозить:"
+        keyboard = await Keyboard().build(cg_list, prefix="add_cg_")
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                            reply_markup=reply_markup)
+
+    async def add_to_forward_cg_step2(self, user_app):
+        data = self.callback_data.data
+        data = data.removeprefix("add_cg_")
+        user_id = int(data)
+        in_list = await GetInfo().in_list(user_id, self.chat_id)
+        if in_list:
+            text = "Этот канал/группа и так есть в списке пересылку!"
+            await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
+        elif not in_list:
+            text = "Подожди пожалуйста, получаю необходимую информацию..."
+            await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                                reply_markup="")
+            user_to_add = await GetInfo().get_channel_name(user_app, user_id)
+            text = f"Добавление канала/группы **\"[{user_to_add}](tg://user?id={user_id})\"** в пересылку.\n\n" \
+                   f"Теперь выбери нужное действие.\n- Если у тебя нету созданого канала для пересылки сообщений, " \
+                   f"или ты хочешь чтобы был создан новый - выбери пункт **\"🆕 Создать автоматически\"**\n- Если" \
+                   f" ты уже имеешь нужный канал для пересылки сообщений - выбери пункт **\"➕ Выбрать существующий" \
+                   f"\"**\n\n**ВНИМАНИЕ!\n- Не советую смешивать пересылку разных каналов/групп в один канал!\n- " \
+                   f"Канал для пересылки сообщений **НЕ ДОЛЖЕН** быть общедоступным!\n- Ты должен быть создателем " \
+                   f"канала!**"
+            keyboard = keyboards.add_select_destination
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            setting.user_setting[f"{self.chat_id}"]["temp_uid"] = user_id
+            setting.user_setting[f"{self.chat_id}"]["temp_name"] = user_to_add
+            await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                                reply_markup=reply_markup)
 
     async def add_from_send_contact_step1(self):
         text = "Теперь отправь контакт пользователя сюда. Для этого зайди в чат с пользователем, открой информацию о " \
@@ -717,6 +768,8 @@ class Keyboard:
             keyboard = copy.deepcopy(keyboards.bottom_button)
         elif prefix == "forward_my_step2_":
             keyboard = copy.deepcopy(keyboards.bottom_button)
+        elif prefix == "add_cg_":
+            keyboard = copy.deepcopy(keyboards.bottom_button)
         for item in list_for_build:
             i = [InlineKeyboardButton(item[0], callback_data=f"{prefix}{item[1]}")]
             keyboard.append(i)
@@ -731,13 +784,15 @@ class GetInfo:
         channel_name = channel_info.title
         return channel_name
 
-    @staticmethod
-    async def get_user_name(client, user_id):
-        user = await client.get_users(user_id)
-        if user.last_name:
-            name = f"{user.first_name} {user.last_name}"
-        else:
-            name = user.first_name
+    async def get_user_name(self, client, user_id):
+        if user_id > 0:
+            user = await client.get_users(user_id)
+            if user.last_name:
+                name = f"{user.first_name} {user.last_name}"
+            else:
+                name = user.first_name
+        elif user_id < 0:
+            name = await self.get_channel_name(client, user_id)
         return name
 
     @staticmethod
@@ -760,7 +815,10 @@ class GetInfo:
     async def build_user_forward_info(self, user_client, chat_id):
         user_list = []
         for user in setting.user_setting[f"{chat_id}"]["forward_setting"]:
-            name = await self.get_user_name(user_client, int(user))
+            if user.startswith("-"):
+                name = await self.get_channel_name(user_client, int(user))
+            else:
+                name = await self.get_user_name(user_client, int(user))
             user_list.append([name, int(user)])
         return user_list
 
@@ -776,17 +834,30 @@ class GetInfo:
         return channels_list
 
     @staticmethod
-    async def build_chat_list(user_client):
+    async def build_chat_list(user_client, flag=None):
         chats = user_client.get_dialogs()
         chats_list = []
-        async for item in chats:
-            if str(item.chat.type) == "ChatType.PRIVATE":
-                if item.chat.last_name:
-                    name = f"{item.chat.first_name} {item.chat.last_name}"
-                else:
-                    name = item.chat.first_name
-                chat_id = item.chat.id
-                chats_list.append([name, chat_id])
+        if not flag:
+            async for item in chats:
+                if str(item.chat.type) == "ChatType.PRIVATE":
+                    if item.chat.last_name:
+                        name = f"{item.chat.first_name} {item.chat.last_name}"
+                    else:
+                        name = item.chat.first_name
+                    chat_id = item.chat.id
+                    chats_list.append([name, chat_id])
+        if flag == "channel":
+            async for item in chats:
+                if str(item.chat.type) == "ChatType.CHANNEL":
+                    name = item.chat.title
+                    channel_id = item.chat.id
+                    chats_list.append([name, channel_id])
+        elif flag == "group":
+            async for item in chats:
+                if str(item.chat.type) == "ChatType.GROUP" or str(item.chat.type) == "ChatType.SUPERGROUP":
+                    name = item.chat.title
+                    group_id = item.chat.id
+                    chats_list.append([name, group_id])
         return chats_list
 
     @staticmethod
@@ -808,7 +879,10 @@ class GetInfo:
         info = "Пользователи которые есть в списке на пересылку и информация о них:\n\n"
         list_id = 1
         for user in forward_setting:
-            user_name = await self.get_user_name(user_client, int(user))
+            if user.startswith("-"):
+                user_name = await self.get_channel_name(user_client, int(user))
+            else:
+                user_name = await self.get_user_name(user_client, int(user))
             prefs = forward_setting[f"{user}"]
             channel_info = await self.get_channel_name(user_client, prefs["forward_to"])
             freeze_info = ""
