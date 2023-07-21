@@ -23,6 +23,7 @@ class UserMessages:
                 user_id = message.chat.id
                 my_id = int(user)
                 protected = None
+                """
                 try:  # bug in dictionary fix shit/ func realised 50/50
                     text = await bot_client.get_chat(int(forward_to))
                     # print(text)
@@ -34,17 +35,18 @@ class UserMessages:
                     # await setting.forward_contact_enable(user_id, message.chat.id, 0)
                     # print("ERROR")
                 else:
-                    if message.chat.has_protected_content:
-                        protected = True
-                    elif not message.chat.has_protected_content:
-                        protected = False
+                """
+                if message.chat.has_protected_content:
+                    protected = True
+                elif not message.chat.has_protected_content:
+                    protected = False
 
-                    if enable_forwarding:
-                        if user_id == my_id:
-                            if forward_self:
-                                await self.forward_processor(message, forward_to, client, protected)
-                        else:
+                if enable_forwarding:
+                    if user_id == my_id:
+                        if forward_self:
                             await self.forward_processor(message, forward_to, client, protected)
+                    else:
+                        await self.forward_processor(message, forward_to, client, protected)
 
     @staticmethod
     async def channel_error_message(message, bot_client, user_id):
