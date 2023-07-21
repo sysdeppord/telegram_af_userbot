@@ -92,7 +92,13 @@ class Setting:
         self.user_setting[f"{user_id}"]["forward_setting"].update({
             f"{forward_user_id}": {"forward_to": to, "enable": 1, "forward_self": 1}})
 
-    def forward_contact_enable(self, user_id, forward_user_id, status):
+    def forward_contact_enable(self, user_id, forward_user_id, status): # fix fuckin dictionary
+        # print(type(forward_user_id))
+        # print(forward_user_id)
+        # if isinstance(forward_user_id, int):
+        #     print("int")
+        # else:
+        #     print("not int")
         """
         Edit status forwarding for chat. NOT GLOBAL PAUSE FORWARDING!
         'user_id' - id bot user where use forwarding
@@ -100,8 +106,12 @@ class Setting:
         'status' - 0/1 (INT) disable/enable forwarding from this chat
         """
         sql = f"UPDATE u{user_id}_forward_setting SET enable = {status} WHERE user = {forward_user_id}"
+        # print(self.user_setting[f"{user_id}"]["forward_setting"])
+        # print("######")
+        # print(self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"])
         self.cur.execute(sql)
         self.con.commit()
+        # print(sql)
         self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]["enable"] = status
 
     def forward_edit_destination(self, user_id, forward_user_id, forward_to):

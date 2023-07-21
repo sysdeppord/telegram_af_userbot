@@ -6,18 +6,17 @@ import os
 from pyrogram import Client
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram import errors
 import keyboards
 from tg_config import api_id, api_hash, name_app, ver_app, system_version, device_model, admin_id
 from tg_config import setting
-from handlers import user_message
+from handlers import UserHandlers
 
 apps = []
 release_note = "Об обновлении:\n" \
-               "- Добавлена з0ащита от авторизации не в свой аккаунт. Ты можешь залогиниться только в тот аккаунт с " \
-               "которого пишешь боту.\n" \
-               "- Добавлена возможность пересылать сообщения сканалов и групп (бесед), даже если там установлен флаг" \
-               " приватности, который запрещает скачивание\копирование материалов.\n" \
-               "- Пофикшены некоторые мелкие (и не очень) баги.\n" \
+               "- Добавлено уведомление  в случае если канала куда пересылаются сообщения удалён или недоступен.\n" \
+               "- Фикс падения генерации выдачи списка пересылок.Теперь будет выводится текст о том, что канал " \
+               "недоступен или удалён\n" \
                "- Возможно добавлены новые баги..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
 
@@ -75,7 +74,7 @@ class NotRegistered:
                     await message.reply_text("Авторизация бота прошла успешно!\n"
                                          "Внесение данных в базу аккаунтов и запуск бота, подожди немного...")
                     setting.authorise(user_id)
-                    await self.run_userbot(user_id, users)
+                    await self.run_userbot(user_id, users, client)
                     await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
             else:
                 await message.reply_text(f"Код авторизации не содержит 5 цифр, количество цифр в твоём коде "
@@ -84,7 +83,9 @@ class NotRegistered:
             await message.reply_text("Код авторизации неправильный, попробуй ещё раз!")
 
     @staticmethod
-    async def run_userbot(user_id, users):
+    async def run_userbot(user_id, users, client):
+        user_handlers = UserHandlers(client)
+        user_message = user_handlers.user_message
         name = f"u{user_id}"
         users.append(Client(name, api_id=api_id, api_hash=api_hash))
         for user in users:
@@ -780,9 +781,12 @@ class GetInfo:
     """Contain methods for building chats/channels/forwards info"""
     @staticmethod
     async def get_channel_name(client, channel_id):
-        channel_info = await client.get_chat(channel_id)
-        channel_name = channel_info.title
-        return channel_name
+        try:
+            channel_info = await client.get_chat(channel_id)
+            channel_name = channel_info.title
+            return channel_name
+        except errors.ChannelPrivate:
+            return "КАНАЛ УДАЛЁН ИЛИ НЕДОСТУПЕН!!!"
 
     async def get_user_name(self, client, user_id):
         if user_id > 0:

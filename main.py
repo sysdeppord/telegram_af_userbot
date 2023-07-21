@@ -3,7 +3,7 @@ from pyrogram import Client, filters, idle
 from pyrogram.handlers import MessageHandler
 from tg_config import api_id, api_hash, bot_token, setting, name_app, ver_app, system_version, device_model
 from bot_processor import Sorter
-from handlers import user_message
+from handlers import UserHandlers
 
 bot = Client("bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token, workdir="./files/bot")
 users = []
@@ -43,11 +43,15 @@ async def bot_message(client, message):
     processor = Sorter(client, users, message=message)
     await processor.message_filter()
 
+user_handlers = UserHandlers(bot)
+user_message = user_handlers.user_message
+
 if __name__ == "__main__":
     build_user_apps()
     check_and_create_folders()
     print("Starting control panel")
     bot.start()
+    bot_client = bot
     print("OK")
     print("Trying to run user apps if exist")
     for user in users:

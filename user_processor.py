@@ -1,33 +1,62 @@
 from datetime import datetime, timedelta
+import copy
+# from pyrogram import errors
 from tg_config import setting
 
 cooldown = 1  # cd for scheduled messages
 
+
 class UserMessages:
     """All forward logic"""
 
-    async def forward_logic(self, client, message):
+    async def forward_logic(self, client, message, bot_client):
         user = client.name.replace("u", "")
         user_setting = setting.user_setting[f"{user}"]
+        user_setting = copy.deepcopy(user_setting)
         is_pause = user_setting["pause"]
         if not is_pause:
-            if f"{message.chat.id}" in user_setting["forward_setting"]:
-                forward_from = user_setting["forward_setting"][f"{message.chat.id}"]
-                forward_to = forward_from["forward_to"]
-                enable_forwarding = forward_from["enable"]
-                forward_self = forward_from["forward_self"]
+            if f"{message.chat.id}" in setting.user_setting[f"{user}"]["forward_setting"]:  # in user_setting["forward_setting"]:
+                # forward_from = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]
+                forward_to = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["forward_to"]
+                enable_forwarding = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["enable"]
+                forward_self = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["forward_self"]
                 user_id = message.chat.id
                 my_id = int(user)
-                if message.chat.has_protected_content:
-                    protected = True
-                elif not message.chat.has_protected_content:
-                    protected = False
-                if enable_forwarding:
-                    if user_id == my_id:
-                        if forward_self:
+                protected = None
+                try:  # bug in dictionary fix shit/ func realised 50/50
+                    text = await bot_client.get_chat(int(forward_to))
+                    # print(text)
+                except:
+                    # print(message.chat.id)
+                    # print(user_setting["forward_setting"])
+                    await self.channel_error_message(message, bot_client, my_id)
+                    # print(setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"])
+                    # await setting.forward_contact_enable(user_id, message.chat.id, 0)
+                    # print("ERROR")
+                else:
+                    if message.chat.has_protected_content:
+                        protected = True
+                    elif not message.chat.has_protected_content:
+                        protected = False
+
+                    if enable_forwarding:
+                        if user_id == my_id:
+                            if forward_self:
+                                await self.forward_processor(message, forward_to, client, protected)
+                        else:
                             await self.forward_processor(message, forward_to, client, protected)
-                    else:
-                        await self.forward_processor(message, forward_to, client, protected)
+
+    @staticmethod
+    async def channel_error_message(message, bot_client, user_id):
+        if not message.from_user:
+            name = message.chat.title
+        elif message.from_user.last_name:
+            name = f"{message.from_user.first_name} {message.from_user.last_name}"
+        else:
+            name = message.from_user.first_name
+        text = f"Канал, в который пересылаются сообщения от **\"{name}\"** недоступен!!! Пересылка заморожена! Измени" \
+               f" канал назначения пересылки в настройках!"
+        await bot_client.send_message(chat_id=user_id, text=text)
 
     async def forward_processor(self, message, forward_to, client, protected):
         dt = datetime.now()
