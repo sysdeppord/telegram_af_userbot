@@ -54,7 +54,7 @@ class NotRegistered:
                 code = v_dig
                 auth = UserAuth()
                 await auth.auth_code(user_id, code, client)
-                print(setting.user_setting)
+                # print(setting.user_setting)
                 if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
                     await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
                                              "отправлено сообщение о попытке входа!")
