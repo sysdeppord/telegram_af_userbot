@@ -61,7 +61,7 @@ class Setting:
         data = [(user_id, 1, 0, "offline", 0)]
         self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)
         self.user_setting.update({f"{user_id}": {"pause": 1, "eula": 0, "forward_type": "offline",
-                                                    "authorised": 0, "menu_point": "", "temp_uid": 0,
+                                                    "authorised": 0, "menu_point": "", "temp_data": "", "temp_uid": 0,
                                                     "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
                                                     "forward_setting": {}}})
         self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
