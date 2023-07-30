@@ -92,7 +92,7 @@ class Setting:
         self.user_setting[f"{user_id}"]["forward_setting"].update({
             f"{forward_user_id}": {"forward_to": to, "enable": 1, "forward_self": 1}})
 
-    def forward_contact_enable(self, user_id, forward_user_id, status): # fix fuckin dictionary
+    def forward_contact_enable(self, user_id, forward_user_id, status):  # fix fuckin dictionary
         # print(type(forward_user_id))
         # print(forward_user_id)
         # if isinstance(forward_user_id, int):

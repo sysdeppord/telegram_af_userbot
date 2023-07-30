@@ -1,22 +1,23 @@
-import os
+# import os
 from pyrogram import Client, filters, idle
 from pyrogram.handlers import MessageHandler
-from tg_config import api_id, api_hash, bot_token, setting, name_app, ver_app, system_version, device_model
-from bot_processor import Sorter
-from handlers import UserHandlers
+from cp_bot.bot_processor import Sorter
+from handlers.handlers import UserHandlers
+from config.app_config import *
+from config.tg_config import *
+from proxy_class import setting
 
 bot = Client("bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token, workdir="./files/bot")
+
 users = []
 
 
-def build_user_apps():
+def add_user_client():
     print("Building users apps")
     for usr in setting.user_setting:
         if setting.user_setting[f"{usr}"]["authorised"] and os.path.exists(f"./files/users/u{usr}"):
             user_id = usr
             name = f"u{user_id}"
-            #if not os.path.exists(f"./files/users/{name}"):
-            #    os.mkdir(f"./files/users/{name}")
             users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app + ver_app,
                                 device_model=device_model, system_version=system_version,
                                 workdir=f"./files/users/{name}"))
@@ -40,6 +41,7 @@ async def bot_callback_query(client, callback_data):
 
 @bot.on_message(filters.private & ~filters.me) # old
 async def bot_message(client, message):
+    print(setting.user_setting)
     processor = Sorter(client, users, message=message)
     await processor.message_filter()
 
@@ -47,7 +49,7 @@ user_handlers = UserHandlers(bot)
 user_message = user_handlers.user_message
 
 if __name__ == "__main__":
-    build_user_apps()
+    add_user_client()
     check_and_create_folders()
     print("Starting control panel")
     bot.start()

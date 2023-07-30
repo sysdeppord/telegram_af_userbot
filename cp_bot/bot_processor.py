@@ -1,18 +1,17 @@
 import copy
 import time
-import datetime
-import shutil
-import os
-from pyrogram import Client
-from pyrogram.handlers import MessageHandler
+
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram import errors
-import keyboards
-from tg_config import api_id, api_hash, name_app, ver_app, system_version, device_model, admin_id
-from tg_config import setting
-from handlers import UserHandlers
+from cp_bot import keyboards
+from config.tg_config import admin_id
+from config.app_config import *
+from proxy_class import setting
+from cp_bot.reg_user import NotRegistered
 
-apps = []
+
+
+
 release_note = "Об обновлении:\n" \
                "- Добавлено уведомление  в случае если канала куда пересылаются сообщения удалён или недоступен.\n" \
                "- Фикс падения генерации выдачи списка пересылок.Теперь будет выводится текст о том, что канал " \
@@ -21,77 +20,6 @@ release_note = "Об обновлении:\n" \
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
 
 
-class NotRegistered:
-
-    @staticmethod
-    async def only_digit(phone_number):
-        """Need to remove phone code symbols like as +, -, (, ), 'spaces'. Add another if need other"""
-        phone_number = phone_number.replace("+", "")
-        phone_number = phone_number.replace("-", "")
-        phone_number = phone_number.replace(" ", "")
-        phone_number = phone_number.replace("(", "")
-        phone_number = phone_number.replace(")", "")
-        return phone_number
-
-    async def auth_number(self, user_id, message):
-        phone_number = await self.only_digit(message.text)
-        if phone_number.isdigit():
-            auth = UserAuth()
-            await auth.create_app(user_id, phone_number)
-            await message.reply_text(
-                "DONE!\nТеперь отправь код авторизации, с цифрами через пробел (прим. \"1 2 266\" и подобное)")
-            setting.user_setting[f"{user_id}"]['menu_point'] = "send_code"
-        else:
-            await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
-
-    async def filter(self, message, users, client):
-        user_id = message.from_user.id
-        if not setting.user_setting.get(f"{user_id}"):
-            setting.register(user_id)
-        if not setting.user_setting[f"{user_id}"]['authorised'] and setting.user_setting[f"{user_id}"]['menu_point'] == "":
-            await message.reply_text("Ты не зарегистрирован! Чтобы продолжить отправь мне свой номер телефона в "
-                                     "международном формате (+380990000000)\n\n**ВАЖНО!!! авторизация со включённым "
-                                     "облачным паролем НЕДОСТУПНА!!! И НЕ БУДЕТ ДОСТУПНА!!!\nНа время авторизации его"
-                                     " прийдётся отключить! После успешной авторизации можешь вернуть его назад.**")
-            setting.user_setting[f"{user_id}"]['menu_point'] = "auth_number"
-        elif setting.user_setting[f"{user_id}"]['menu_point'] == "auth_number":
-            await self.auth_number(user_id, message)
-        elif setting.user_setting[f"{user_id}"]['menu_point'] == "send_code":
-            await self.send_code(message, user_id, users, client)
-
-    async def send_code(self, message, user_id, users, client):
-        v_dig = message.text
-        v_dig = v_dig.replace(" ", "")
-        if v_dig.isdigit():
-            if len(v_dig) == 5:
-                code = v_dig
-                auth = UserAuth()
-                await auth.auth_code(user_id, code, client)
-                if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
-                    await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
-                                             "отправлено сообщение о попытке входа!")
-                else:
-                    await message.reply_text("Авторизация бота прошла успешно!\n"
-                                         "Внесение данных в базу аккаунтов и запуск бота, подожди немного...")
-                    setting.authorise(user_id)
-                    await self.run_userbot(user_id, users, client)
-                    await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
-            else:
-                await message.reply_text(f"Код авторизации не содержит 5 цифр, количество цифр в твоём коде "
-                                         f"\"{len(v_dig)}\"\nПопробуй ввести код ещё раз!")
-        else:
-            await message.reply_text("Код авторизации неправильный, попробуй ещё раз!")
-
-    @staticmethod
-    async def run_userbot(user_id, users, client):
-        user_handlers = UserHandlers(client)
-        user_message = user_handlers.user_message
-        name = f"u{user_id}"
-        users.append(Client(name, api_id=api_id, api_hash=api_hash))
-        for user in users:
-            if user.name == name:
-                user.add_handler(MessageHandler(user_message))
-                await user.start()
 
 
 class Sorter:
@@ -254,7 +182,7 @@ class Processor:
 
     async def remove_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("remove_")
+        data = data.replace("remove_", "")
         remove_id = int(data)
         setting.del_forward(self.chat_id, remove_id)
         name = await GetInfo().get_user_name(user_app, remove_id)
@@ -280,7 +208,7 @@ class Processor:
 
     async def freeze_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("freeze_")
+        data = data.replace("freeze_", "")
         freeze_id = int(data)
         setting.forward_contact_enable(self.chat_id, freeze_id, 0)
         name = await GetInfo().get_user_name(user_app, freeze_id)
@@ -305,7 +233,7 @@ class Processor:
 
     async def unfreeze_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("unfreeze_")
+        data = data.replace("unfreeze_", "")
         unfreeze_id = int(data)
         setting.forward_contact_enable(self.chat_id, unfreeze_id, 1)
         name = await GetInfo().get_user_name(user_app, unfreeze_id)
@@ -332,7 +260,7 @@ class Processor:
         text = "Подожди пожалуйста, получаю необходимую информацию..."
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         data = self.callback_data.data
-        data = data.removeprefix("change_destination_")
+        data = data.replace("change_destination_", "")
         from_id = int(data)
         user_change = await GetInfo().get_user_name(user_app, from_id)
         text = f"Изменение канала для пересылки сообщений пользователя **\"[{user_change}](tg://user?id={from_id})\"" \
@@ -346,7 +274,7 @@ class Processor:
 
     async def change_destination_step3(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("select_channel_")
+        data = data.replace("select_channel_", "")
         forward_to = int(data)
         user_id = setting.user_setting[f"{self.chat_id}"]["temp_uid"]
         setting.forward_edit_destination(self.chat_id, user_id, forward_to)
@@ -375,7 +303,7 @@ class Processor:
         text = "Получаю информацию. Подожди немного..."
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         data = self.callback_data.data
-        data = data.removeprefix("forward_my_step2_")
+        data = data.replace("forward_my_step2_", "")
         data = int(data)
         user_info = await GetInfo().in_list(data, self.chat_id)
         user_name = await GetInfo().get_user_name(user_app, data)
@@ -435,7 +363,7 @@ class Processor:
 
     async def add_to_forward_cg_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("add_cg_")
+        data = data.replace("add_cg_", "")
         user_id = int(data)
         in_list = await GetInfo().in_list(user_id, self.chat_id)
         if in_list:
@@ -513,7 +441,7 @@ class Processor:
 
     async def add_from_exist_chat_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("exist_chat_")
+        data = data.replace("exist_chat_", "")
         user_id = int(data)
         in_list = await GetInfo().in_list(user_id, self.chat_id)
         if in_list:
@@ -547,7 +475,7 @@ class Processor:
 
     async def add_from_sync_contact_step2(self, user_app):
         data = self.callback_data.data
-        data = data.removeprefix("sync_contact_")
+        data = data.replace("sync_contact_", "")
         user_id = int(data)
         in_list = await GetInfo().in_list(user_id, self.chat_id)
         if in_list:
@@ -643,7 +571,7 @@ class Processor:
         from_id = setting.user_setting[f"{self.chat_id}"]["temp_uid"]
         name = setting.user_setting[f"{self.chat_id}"]["temp_name"]
         data = self.callback_data.data
-        data = data.removeprefix("select_existing_")
+        data = data.replace("select_existing_", "")
         forward_to = int(data)
         setting.add_to_forwarding(self.chat_id, from_id, forward_to)
         channel_name = await GetInfo().get_channel_name(user_app, forward_to)
@@ -913,43 +841,3 @@ class GetInfo:
                 return app
 
 
-class UserAuth:
-
-    @staticmethod
-    async def create_app(user_id, phone_number):
-        name = f"u{user_id}"
-        if not os.path.exists(f"./files/users/{name}"):
-            os.mkdir(f"./files/users/{name}")
-        app = Client(f"{name}", api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
-                     device_model=device_model, system_version=system_version, workdir=f"./files/users/{name}")
-        await app.connect()
-        sc = await app.send_code(phone_number=phone_number)
-        apps.append([app, sc, phone_number])
-
-    @staticmethod
-    async def auth_code(user_id, phone_code, bot):
-        for app in apps:
-            if app[0].name == f"u{user_id}":
-                pch = app[1].phone_code_hash
-                await app[0].sign_in(phone_number=app[2], phone_code_hash=pch, phone_code=phone_code)
-                info = await app[0].get_me()
-                if info.id != user_id:
-                    setting.user_setting[f"{user_id}"]["temp_data"] = "not_self_id"
-                    setting.user_setting[f"{user_id}"]["menu_point"] = ""
-                    tg_info = await bot.get_users(user_id)
-                    if tg_info.last_name:
-                        name = f"{tg_info.first_name} {tg_info.last_name}"
-                    else:
-                        name = tg_info.first_name
-                    text = f"Произошла попытка несанкцонированого в твой аккаунт входа через @CP_forward_bot, " \
-                           f"авторизация отклонена!\n\nИнформация о пользователе, который пытался авторизоваться:\n" \
-                           f"Имя установленое в телеграм: **[{name}](tg://user?id={user_id})**\n" \
-                           f"ID Телеграмм аккаунта: `{user_id}`\n" \
-                           f"Юзернейм (если установлен): @{tg_info.username}\n" \
-                           f"Время входа: --{datetime.datetime.now()}--"
-                    await app[0].send_message("me", text)
-                    await app[0].disconnect()
-                    shutil.rmtree(f"./files/users/u{user_id}")
-
-                else:
-                    await app[0].disconnect()

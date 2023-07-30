@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import copy
 # from pyrogram import errors
-from tg_config import setting
+from proxy_class import setting
 
 cooldown = 1  # cd for scheduled messages
 
