@@ -4,8 +4,7 @@ from handlers.handlers import UserHandlers
 from proxy_class import setting
 from cp_bot.user_auth import UserAuth
 from config.tg_config import *
-
-
+from config.app_config import *
 
 
 class NotRegistered:
@@ -58,10 +57,13 @@ class NotRegistered:
                 if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
                     await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
                                              "отправлено сообщение о попытке входа!")
+                    await auth.remove_user_app(user_id)
                 else:
-                    await message.reply_text("Авторизация бота прошла успешно!\n"
-                                         "Внесение данных в базу аккаунтов и запуск бота, подожди немного...")
+                    await auth.remove_user_app(user_id)
+                    await message.reply_text("Авторизация бота прошла успешно!\nВнесение данных в базу аккаунтов и "
+                                             "запуск бота, подожди немного...")
                     setting.authorise(user_id)
+
                     await self.run_userbot(user_id, users, client)
                     await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
             else:
@@ -75,7 +77,8 @@ class NotRegistered:
         user_handlers = UserHandlers(client)
         user_message = user_handlers.user_message
         name = f"u{user_id}"
-        users.append(Client(name, api_id=api_id, api_hash=api_hash))
+        users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
+                     device_model=device_model, system_version=system_version, workdir=f"./files/users/{name}"))
         for user in users:
             if user.name == name:
                 user.add_handler(MessageHandler(user_message))
