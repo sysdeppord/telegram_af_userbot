@@ -1,4 +1,5 @@
 from pyrogram import Client
+from pyrogram.errors import PhoneNumberInvalid, PhoneCodeInvalid, PhoneCodeExpired
 from pyrogram.handlers import MessageHandler
 from handlers.handlers import UserHandlers
 from proxy_class import setting
@@ -23,10 +24,14 @@ class NotRegistered:
         phone_number = await self.only_digit(message.text)
         if phone_number.isdigit():
             auth = UserAuth()
-            await auth.create_app(user_id, phone_number)
-            await message.reply_text(
-                "DONE!\nТеперь отправь код авторизации, с цифрами через пробел (прим. \"1 2 266\" и подобное)")
-            setting.user_setting[f"{user_id}"]['menu_point'] = "send_code"
+            try:
+                await auth.create_app(user_id, phone_number)
+                await message.reply_text(
+                    "DONE!\nТеперь отправь код авторизации, с цифрами через пробел (прим. \"1 2 266\" и подобное)")
+                setting.user_setting[f"{user_id}"]['menu_point'] = "send_code"
+            except PhoneNumberInvalid:
+                await message.reply_text("Ты отправил не действительный номер телефона!\n"
+                                         "Перепроверь и попробуй ещё раз!")
         else:
             await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
 
@@ -52,20 +57,30 @@ class NotRegistered:
             if len(v_dig) == 5:
                 code = v_dig
                 auth = UserAuth()
-                await auth.auth_code(user_id, code, client)
-                # print(setting.user_setting)
-                if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
-                    await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
-                                             "отправлено сообщение о попытке входа!")
-                    await auth.remove_user_app(user_id)
-                else:
-                    await auth.remove_user_app(user_id)
-                    await message.reply_text("Авторизация бота прошла успешно!\nВнесение данных в базу аккаунтов и "
-                                             "запуск бота, подожди немного...")
-                    setting.authorise(user_id)
+                try:
+                    await auth.auth_code(user_id, code, client)
+                    # print(setting.user_setting)
+                    if setting.user_setting[f"{user_id}"]["temp_data"] == "not_self_id":
+                        await message.reply_text("Ты вошел не в свой аккаунт! Авторизация отменена!\nХазяину аккаунта "
+                                                 "отправлено сообщение о попытке входа!")
+                        await auth.remove_user_app(user_id)
+                    else:
+                        await auth.remove_user_app(user_id)
+                        await message.reply_text("Авторизация бота прошла успешно!\nВнесение данных в базу аккаунтов и "
+                                                 "запуск бота, подожди немного...")
+                        setting.authorise(user_id)
 
-                    await self.run_userbot(user_id, users, client)
-                    await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
+                        await self.run_userbot(user_id, users, client)
+                        await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
+                except PhoneCodeInvalid:
+                    await message.reply_text("Введён НЕВЕРНЫЙ код!\nПопробуй ещё раз!")
+                except PhoneCodeExpired:
+                    await message.reply_text("Срок действия введённого кода истёк или код был отправлен без пробелов!"
+                                             "\nПробуем получить ещё один код...")
+                    await auth.resend_code(user_id)
+                    await message.reply_text("Код отправлен ещё раз! Попробуй ввести его правильно, вставив между "
+                                             "цифрами пробел (например \"**123 45**\")")
+
             else:
                 await message.reply_text(f"Код авторизации не содержит 5 цифр, количество цифр в твоём коде "
                                          f"\"{len(v_dig)}\"\nПопробуй ввести код ещё раз!")

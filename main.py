@@ -41,7 +41,6 @@ async def bot_callback_query(client, callback_data):
 
 @bot.on_message(filters.private & ~filters.me) # old
 async def bot_message(client, message):
-    print(setting.user_setting)
     processor = Sorter(client, users, message=message)
     await processor.message_filter()
 

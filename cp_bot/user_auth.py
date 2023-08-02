@@ -23,6 +23,12 @@ class UserAuth:
         user_apps[user_id] = {'app': app, 'sc': sc, 'phone_number': phone_number}
 
     @staticmethod
+    async def resend_code(user_id):
+        app_data = user_apps[user_id]
+        sc = await app_data["app"].send_code(phone_number=app_data['phone_number'])
+        app_data['sc'] = sc
+
+    @staticmethod
     async def auth_code(user_id, phone_code, bot):
         if user_id in user_apps:
             app_data = user_apps[user_id]
