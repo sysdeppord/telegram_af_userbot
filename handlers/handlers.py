@@ -1,4 +1,4 @@
-from user_processor import UserMessages
+from user_bot.user_processor import UserMessages
 
 
 class UserHandlers:
