@@ -1,5 +1,5 @@
 from pyrogram import Client
-from pyrogram.errors import PhoneNumberInvalid, PhoneCodeInvalid, PhoneCodeExpired
+from pyrogram.errors import PhoneNumberInvalid, PhoneCodeInvalid, PhoneCodeExpired, SessionPasswordNeeded
 from pyrogram.handlers import MessageHandler
 from handlers.handlers import UserHandlers
 from proxy_class import setting
@@ -49,6 +49,21 @@ class NotRegistered:
             await self.auth_number(user_id, message)
         elif setting.user_setting[f"{user_id}"]['menu_point'] == "send_code":
             await self.send_code(message, user_id, users, client)
+        elif setting.user_setting[f"{user_id}"]['menu_point'] == "cloud_password":
+            await self.check_password(message, user_id, users, client)
+
+    async def check_password(self, message, user_id, users, client):
+        password = message.text
+        auth = UserAuth()
+        await auth.check_cloud_password(user_id, password)
+        await auth.remove_user_app(user_id)
+        await message.reply_text("Авторизация бота прошла успешно!\nВнесение данных в базу аккаунтов и "
+                                 "запуск бота, подожди немного...")
+        setting.authorise(user_id)
+        await self.run_userbot(user_id, users, client)
+        await message.reply_text("Бот запущен!\nПриятного пользования!\nНажми ещё раз /start)")
+
+
 
     async def send_code(self, message, user_id, users, client):
         v_dig = message.text
@@ -80,6 +95,13 @@ class NotRegistered:
                     await auth.resend_code(user_id)
                     await message.reply_text("Код отправлен ещё раз! Попробуй ввести его правильно, вставив между "
                                              "цифрами пробел (например \"**123 45**\")")
+                except SessionPasswordNeeded:
+                    text = "Теперь необходимо ввести пароль 2х факторной авторизации!"
+                    hint = await auth.check_hint_cloud_password(user_id)
+                    if hint:
+                        text += f"\nПодсказка к паролю: \"{hint}\""
+                    setting.user_setting[f"{user_id}"]["menu_point"] = "cloud_password"
+                    await message.reply_text(text)
 
             else:
                 await message.reply_text(f"Код авторизации не содержит 5 цифр, количество цифр в твоём коде "

@@ -57,5 +57,18 @@ class UserAuth:
                 await app_data['app'].disconnect()
 
     @staticmethod
+    async def check_hint_cloud_password(user_id):
+        app_data = user_apps[user_id]
+        hint = await app_data['app'].get_password_hint()
+        return hint
+
+    @staticmethod
+    async def check_cloud_password(user_id, password):
+        app_data = user_apps[user_id]
+        pwd = await app_data['app'].check_password(password)
+        print(pwd)
+        await app_data['app'].disconnect()
+
+    @staticmethod
     async def remove_user_app(user_id):
         del user_apps[user_id]
