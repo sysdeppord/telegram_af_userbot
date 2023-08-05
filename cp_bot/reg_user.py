@@ -1,6 +1,6 @@
 from pyrogram import Client
 from pyrogram.errors import (PhoneNumberInvalid, PhoneCodeInvalid, PhoneCodeExpired, SessionPasswordNeeded,
-                             PasswordHashInvalid, FloodWait)
+                             PasswordHashInvalid, FloodWait, PhonePasswordFlood)
 from pyrogram.handlers import MessageHandler
 from handlers.handlers import UserHandlers
 from pyrogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
@@ -42,6 +42,9 @@ class NotRegistered:
                 except PhoneNumberInvalid:
                     await message.reply_text("Ты отправил не действительный номер телефона!\n"
                                              "Перепроверь и попробуй ещё раз!")
+                except PhonePasswordFlood:
+                    await message.reply_text("У тебя было слишком много попыток входа! Приходи позже!")
+
             else:
                 await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
 
