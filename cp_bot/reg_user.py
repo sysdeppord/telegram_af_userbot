@@ -44,6 +44,7 @@ class NotRegistered:
                                              "Перепроверь и попробуй ещё раз!")
                 except PhonePasswordFlood:
                     await message.reply_text("У тебя было слишком много попыток входа! Приходи позже!")
+                    setting.user_setting[f"{user_id}"]['menu_point'] = ""
 
             else:
                 await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
