@@ -66,7 +66,6 @@ class UserAuth:
     async def check_cloud_password(user_id, password):
         app_data = user_apps[user_id]
         pwd = await app_data['app'].check_password(password)
-        print(pwd)
         await app_data['app'].disconnect()
 
     @staticmethod

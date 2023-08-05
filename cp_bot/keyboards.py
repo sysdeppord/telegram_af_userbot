@@ -10,6 +10,9 @@ start_message = [
     [InlineKeyboardButton("⚙️ Настройки", callback_data="setting")],
     [InlineKeyboardButton("ℹ️ О боте", callback_data="about")]
 ]
+auth_ok = [
+    [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
+]
 add = [
     [InlineKeyboardButton("👤 Отправлю контакт пользователя", callback_data="add_from_send_contact_step1")],
     [InlineKeyboardButton("👉💬 Выберу чат с пользователем", callback_data="add_from_exist_chat_step1")],
@@ -41,7 +44,6 @@ add_select_destination = [
     [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
     [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
 ]
-# Future to auth from bot
 enter_code = [
     [InlineKeyboardButton("1️⃣", callback_data="code_1"),
     InlineKeyboardButton("2️⃣", callback_data="code_2"),
@@ -54,9 +56,7 @@ enter_code = [
     InlineKeyboardButton("9️⃣", callback_data="code_9")],
     [InlineKeyboardButton("🆗", callback_data="code_ok"),
     InlineKeyboardButton("0️⃣", callback_data="code_0"),
-    InlineKeyboardButton("↩️", callback_data="code_remove")],
-    [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
-    [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
+    InlineKeyboardButton("↩️", callback_data="code_remove")]
 ]
 bottom_button = [
     [InlineKeyboardButton("⚙️ Назад в меню настроек", callback_data="setting")],

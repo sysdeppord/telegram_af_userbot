@@ -107,6 +107,9 @@ class Sorter:
             await self.processor.forward_my_off()
         elif data == "forward_my_on":
             await self.processor.forward_my_on()
+        elif data.startswith("code_"):
+            not_registered = NotRegistered()
+            await not_registered.input_auth_code(self.callback_data, self.user_id, self.users, self.client)
 
     async def message_filter(self):
         get_info = GetInfo()
@@ -346,6 +349,8 @@ class Processor:
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
     async def add_to_forward_cg_step1(self, user_app):
+        text = ""
+        flag = ""
         if self.callback_data.data == "add_to_forward_channel":
             text = "Идёт подготовка списка каналов на добавление в пересылку. Подожди немного..."
             flag = "channel"
@@ -629,6 +634,7 @@ class Processor:
         await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
 
     async def status(self):
+        text = ""
         if setting.user_setting[f"{self.chat_id}"]["pause"]:
             text = "Бот остановлен!"
         if not setting.user_setting[f"{self.chat_id}"]["pause"]:
@@ -717,6 +723,7 @@ class GetInfo:
             return "КАНАЛ УДАЛЁН ИЛИ НЕДОСТУПЕН!!!"
 
     async def get_user_name(self, client, user_id):
+        name = None
         if user_id > 0:
             user = await client.get_users(user_id)
             if user.last_name:

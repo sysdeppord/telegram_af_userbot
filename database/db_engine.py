@@ -35,9 +35,17 @@ class Setting:
             self.cur.execute("ALTER TABLE my_setting ADD COLUMN authorized INTEGER")
             self.con.commit()
         for row in self.cur.execute("SELECT user, pause, eula, forward_type, authorized FROM my_setting ORDER BY user"):
-            self.user_setting.update({f"{row[0]}": {"pause": row[1], "eula": row[2], "forward_type": row[3],
-                                                    "authorised": row[4], "menu_point": "", "temp_data": "", "temp_uid": 0,
-                                                    "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
+            self.user_setting.update({f"{row[0]}": {"pause": row[1],
+                                                    "eula": row[2],
+                                                    "forward_type": row[3],
+                                                    "authorised": row[4],
+                                                    "menu_point": "",
+                                                    "temp_data": "",
+                                                    "auth_code": "",
+                                                    "temp_uid": 0,
+                                                    "temp_cid": 0,
+                                                    "temp_callbackdata": None,
+                                                    "temp_name": "",
                                                     "forward_setting": {}}})
 
     def __load_forward_setting(self):
@@ -48,8 +56,10 @@ class Setting:
             for user in self.user_setting:
                 for row in self.cur.execute(f"SELECT user, forward_to, enable, forward_self FROM "
                                             f"u{user}_forward_setting ORDER BY user"):
-                    self.user_setting[f"{user}"]["forward_setting"].update({
-                        f"{row[0]}": {"forward_to": row[1], "enable": row[2], "forward_self": row[3]}})
+                    self.user_setting[f"{user}"]["forward_setting"].update({f"{row[0]}": {
+                        "forward_to": row[1],
+                        "enable": row[2],
+                        "forward_self": row[3]}})
         if not self.user_setting:
             print("EMPTY")
 
@@ -60,10 +70,18 @@ class Setting:
         """
         data = [(user_id, 1, 0, "offline", 0)]
         self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)
-        self.user_setting.update({f"{user_id}": {"pause": 1, "eula": 0, "forward_type": "offline",
-                                                    "authorised": 0, "menu_point": "", "temp_data": "", "temp_uid": 0,
-                                                    "temp_cid": 0, "temp_callbackdata": None, "temp_name": "",
-                                                    "forward_setting": {}}})
+        self.user_setting.update({f"{user_id}": {"pause": 1,
+                                                 "eula": 0,
+                                                 "forward_type": "offline",
+                                                 "authorised": 0,
+                                                 "menu_point": "",
+                                                 "temp_data": "",
+                                                 "auth_code": "",
+                                                 "temp_uid": 0,
+                                                 "temp_cid": 0,
+                                                 "temp_callbackdata": None,
+                                                 "temp_name": "",
+                                                 "forward_setting": {}}})
         self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
                          f"forward_self INTEGER)")
         self.con.commit()
@@ -90,15 +108,12 @@ class Setting:
         self.cur.executemany(f"INSERT INTO u{user_id}_forward_setting VALUES(?, ?, ?, ?)", data)
         self.con.commit()
         self.user_setting[f"{user_id}"]["forward_setting"].update({
-            f"{forward_user_id}": {"forward_to": to, "enable": 1, "forward_self": 1}})
+            f"{forward_user_id}": {"forward_to": to,
+                                   "enable": 1,
+                                   "forward_self": 1}})
 
-    def forward_contact_enable(self, user_id, forward_user_id, status):  # fix fuckin dictionary
-        # print(type(forward_user_id))
-        # print(forward_user_id)
-        # if isinstance(forward_user_id, int):
-        #     print("int")
-        # else:
-        #     print("not int")
+    def forward_contact_enable(self, user_id, forward_user_id, status):
+        # need fix fuckin dictionary for adding auto stop forwarding feature
         """
         Edit status forwarding for chat. NOT GLOBAL PAUSE FORWARDING!
         'user_id' - id bot user where use forwarding
@@ -106,12 +121,8 @@ class Setting:
         'status' - 0/1 (INT) disable/enable forwarding from this chat
         """
         sql = f"UPDATE u{user_id}_forward_setting SET enable = {status} WHERE user = {forward_user_id}"
-        # print(self.user_setting[f"{user_id}"]["forward_setting"])
-        # print("######")
-        # print(self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"])
         self.cur.execute(sql)
         self.con.commit()
-        # print(sql)
         self.user_setting[f"{user_id}"]["forward_setting"][f"{forward_user_id}"]["enable"] = status
 
     def forward_edit_destination(self, user_id, forward_user_id, forward_to):
