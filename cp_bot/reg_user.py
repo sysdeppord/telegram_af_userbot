@@ -45,6 +45,9 @@ class NotRegistered:
                 except PhonePasswordFlood:
                     await message.reply_text("У тебя было слишком много попыток входа! Приходи позже!")
                     setting.user_setting[f"{user_id}"]['menu_point'] = ""
+                except FloodWait as time:
+                    await message.reply_text(f"У тебя было слишком много попыток входа! Приходи позже!")
+                    setting.user_setting[f"{user_id}"]['menu_point'] = ""
 
             else:
                 await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
@@ -191,6 +194,12 @@ class NotRegistered:
                 text += f"\nПодсказка к паролю: \"{hint}\""
             setting.user_setting[f"{user_id}"]["menu_point"] = "cloud_password"
             await client.send_message(chat_id=chat_id, text=text)
+        except FloodWait as time:
+            text = (f"Ты ввёл слишком много раз неправильный код авторизации и телеграм заморозил все попытки входа!\n"
+                    f"Ограничение снимется через \"{time}\" секунд.\nМы сбросили данные авторизации, возвращайся "
+                    f"когда пройдёт это время и снова запусти /start")
+            setting.user_setting[f"{user_id}"]["menu_point"] = ""
+            await client.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup="")
 
     @staticmethod
     async def run_userbot(user_id, users, client):
