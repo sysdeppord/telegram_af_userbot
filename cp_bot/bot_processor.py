@@ -10,16 +10,16 @@ from proxy_class import setting
 from cp_bot.reg_user import NotRegistered
 
 
-
-
 release_note = "Об обновлении:\n" \
-               "- Добавлено уведомление  в случае если канала куда пересылаются сообщения удалён или недоступен.\n" \
-               "- Фикс падения генерации выдачи списка пересылок.Теперь будет выводится текст о том, что канал " \
-               "недоступен или удалён\n" \
+               "- Авторизация через отправку контакта - теперь не нужно вводить свой телефон вручную, просто нажми " \
+               "на кнопку бота и телеграмм сам отправит твой контакт боту.\n" \
+               "- Авторизация через облачный пароль (не рекомендую использовать, лучше отключить на время входа до " \
+               "того, как будешь авторизовываться)\n" \
+               "- Ввод кода авторизации через клавиатуру бота.\n" \
+               "- Теперь если ты заблокируешь бота и он не сможет отправить тебе уведомление - ты получишь" \
+               " блокировку возможности пользоваться этим ботом\n" \
                "- Возможно добавлены новые баги..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
-
-
 
 
 class Sorter:
@@ -116,7 +116,10 @@ class Sorter:
         user = await get_info.get_user_app(self.user_id, self.users)
         if await get_info.is_register(self.user_id):
             if self.message.text == "/start":
-                await self.processor.start_message()
+                if setting.user_setting[f"{self.user_id}"]["is_blocked"]:
+                    await self.processor.blocked_message()
+                else:
+                    await self.processor.start_message()
             if setting.user_setting[f"{self.user_id}"]["menu_point"] == "add_from_send_contact_step2":
                 await self.processor.add_from_send_contact_step2(user)
             if setting.user_setting[f"{self.user_id}"]["menu_point"] == "add_from_forwarded_message_step2":
@@ -150,6 +153,14 @@ class Processor:
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.message.reply_text(text, reply_markup=reply_markup)
+
+    async def blocked_message(self):
+        blocked_text = setting.user_setting[f"{self.chat_id}"]["blocked_text"]
+        text = (f"Ты получил это сообщение, поскольку был заблокирован в боте!\n"
+                f"Информация о блокировке: \"{blocked_text}\"\n\n"
+                f"Для получения разбана обратись со скриншотом к @SYSdeppord\n"
+                f"||За разбан расплачиваться прийдётся аналом XD||")
+        await self.message.reply_text(text)
 
     async def main_menu(self):
         text = "Привет!\nЭто бот для автоматической пересылки!\nДля навигации по меню используй кнопки ниже!"
@@ -669,7 +680,17 @@ class Processor:
         if self.message.from_user.id == admin_id:
             await self.message.reply_text("Начало отправки уведомлений...")
             for user in setting.user_setting:
-                await self.client.send_message(int(user), text)
+                try:
+                    await self.client.send_message(int(user), text)
+                except errors.UserIsBlocked:
+                    info = await self.client.get_users(int(user))
+                    name = info.first_name
+                    if info.last_name:
+                        name = f"{info.first_name} {info.last_name}"
+                    await self.message.reply_text(f"{name} заблокировал бота!")
+                    blocked_text = ("Ты был заблокирован автоматически в ответ поскольку при обновлении бот увидел, что"
+                                    " ты его заблокировал!")
+                    setting.set_block_user(int(user), 1, blocked_text)
             await self.message.reply_text("Уведомление о начале обновления отправлено!")
         elif self.message.from_user.id != admin_id:
             await self.message.reply_text("Данная комманда доступна только администратору!")
@@ -679,7 +700,23 @@ class Processor:
         if self.message.from_user.id == admin_id:
             await self.message.reply_text("Начало отправки уведомлений...")
             for user in setting.user_setting:
-                await self.client.send_message(int(user), text)
+                try:
+                    await self.client.send_message(int(user), text)
+                except errors.UserIsBlocked:
+                    info = await self.client.get_users(int(user))
+                    name = info.first_name
+                    if info.last_name:
+                        name = f"{info.first_name} {info.last_name}"
+                    await self.message.reply_text(f"{name} заблокировал бота!")
+                    blocked_text = ("Ты был заблокирован автоматически в ответ поскольку при обновлении бот увидел, что"
+                                    " ты его заблокировал!")
+                    setting.set_block_user(int(user), 1, blocked_text)
+                    for u in self.users:
+                        if u.name == f"u{user}":
+                            try:
+                                await u.stop()
+                            except:
+                                pass
             await self.message.reply_text("Уведомление об окончании обновления отправлено!")
         elif self.message.from_user.id != admin_id:
             await self.message.reply_text("Данная комманда доступна только администратору!")

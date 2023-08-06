@@ -137,6 +137,11 @@ class NotRegistered:
                     f"Мы сбросили данные авторизации, возвращайся когда пройдёт это время и снова запусти /start")
             setting.user_setting[f"{user_id}"]["menu_point"] = ""
             await client.send_message(chat_id=user_id, text=text)
+        except AttributeError:
+            text = (f"Ты измения пароль во время авторизации?! Помянем!\nМы сбросили данные авторизации, и пройди "
+                    f"авторизацию с нуля! /start")
+            setting.user_setting[f"{user_id}"]["menu_point"] = ""
+            await client.send_message(chat_id=user_id, text=text)
 
 
 

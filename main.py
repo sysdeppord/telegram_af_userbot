@@ -15,7 +15,7 @@ users = []
 def add_user_client():
     print("Building users apps")
     for usr in setting.user_setting:
-        if setting.user_setting[f"{usr}"]["authorised"] and os.path.exists(f"./files/users/u{usr}"):
+        if setting.user_setting[f"{usr}"]["authorised"] and os.path.exists(f"./files/users/u{usr}") and setting.user_setting[f"{usr}"]["is_blocked"] != 1:
             user_id = usr
             name = f"u{user_id}"
             users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app + ver_app,
@@ -65,4 +65,7 @@ if __name__ == "__main__":
     bot.stop()
     for user in users:
         print(f"Stopping {user.name}")
-        user.stop()
+        try:
+            user.stop()
+        except:
+            print(f"Already stopped {user.name}")

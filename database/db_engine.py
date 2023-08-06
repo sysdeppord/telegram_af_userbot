@@ -20,7 +20,7 @@ class Setting:
         else:
             print('Table "my_setting" does not exist, creating...')
             self.cur.execute("CREATE TABLE my_setting(user INTEGER, pause INTEGER, eula INTEGER, forward_type TEXT, "
-                             "authorized INTEGER)")
+                             "authorized INTEGER, is_blocked INTEGER, blocked_text TEXT)")
             self.con.commit()
             print("Created!")
         self.cur.execute("PRAGMA table_info('my_setting')")
@@ -34,7 +34,13 @@ class Setting:
         if 'authorized' not in columns:
             self.cur.execute("ALTER TABLE my_setting ADD COLUMN authorized INTEGER")
             self.con.commit()
-        for row in self.cur.execute("SELECT user, pause, eula, forward_type, authorized FROM my_setting ORDER BY user"):
+        if 'is_blocked' not in columns:
+            self.cur.execute("ALTER TABLE my_setting ADD COLUMN is_blocked INTEGER")
+            self.con.commit()
+        if 'blocked_text' not in columns:
+            self.cur.execute("ALTER TABLE my_setting ADD COLUMN blocked_text TEXT")
+            self.con.commit()
+        for row in self.cur.execute("SELECT user, pause, eula, forward_type, authorized, is_blocked, blocked_text FROM my_setting ORDER BY user"):
             self.user_setting.update({f"{row[0]}": {"pause": row[1],
                                                     "eula": row[2],
                                                     "forward_type": row[3],
@@ -44,6 +50,8 @@ class Setting:
                                                     "auth_code": "",
                                                     "temp_uid": 0,
                                                     "temp_cid": 0,
+                                                    "is_blocked": row[5],
+                                                    "blocked_text": row[6],
                                                     "temp_callbackdata": None,
                                                     "temp_name": "",
                                                     "forward_setting": {}}})
@@ -79,6 +87,8 @@ class Setting:
                                                  "auth_code": "",
                                                  "temp_uid": 0,
                                                  "temp_cid": 0,
+                                                 "is_blocked": 0,
+                                                 "blocked_text": "",
                                                  "temp_callbackdata": None,
                                                  "temp_name": "",
                                                  "forward_setting": {}}})
@@ -190,3 +200,16 @@ class Setting:
         self.cur.execute(sql)
         self.con.commit()
         self.user_setting[f"{user_id}"]["forward_setting"] = {}
+
+    def set_block_user(self, user_id, status, blocked_text):
+        """
+        Set blocked status and text to user
+        'user_id' - id bot user to set status
+        'status' - 1/0 block/unblock user
+        'blocked_text' - text to show user if him get blocked message
+        """
+        sql = f"UPDATE my_setting SET is_blocked = {status}, blocked_text = '{blocked_text}' WHERE user = {user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        self.user_setting[f"{user_id}"]["is_blocked"] = status
+        self.user_setting[f"{user_id}"]["blocked_text"] = blocked_text
