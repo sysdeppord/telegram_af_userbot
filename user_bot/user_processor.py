@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import copy
-# from pyrogram import errors
+from pyrogram import errors
 from proxy_class import setting
 
 cooldown = 1  # cd for scheduled messages
@@ -20,33 +20,25 @@ class UserMessages:
                 forward_to = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["forward_to"]
                 enable_forwarding = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["enable"]
                 forward_self = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["forward_self"]
-                user_id = message.chat.id
+                user_id = message.from_user.id
                 my_id = int(user)
                 protected = None
-                """
-                try:  # bug in dictionary fix shit/ func realised 50/50
-                    text = await bot_client.get_chat(int(forward_to))
-                    # print(text)
-                except:
-                    # print(message.chat.id)
-                    # print(user_setting["forward_setting"])
-                    await self.channel_error_message(message, bot_client, my_id)
-                    # print(setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"])
-                    # await setting.forward_contact_enable(user_id, message.chat.id, 0)
-                    # print("ERROR")
-                else:
-                """
-                if message.chat.has_protected_content:
-                    protected = True
-                elif not message.chat.has_protected_content:
-                    protected = False
+                try:
+                    if message.chat.has_protected_content:
+                        protected = True
+                    elif not message.chat.has_protected_content:
+                        protected = False
 
-                if enable_forwarding:
-                    if user_id == my_id:
-                        if forward_self:
+                    if enable_forwarding:
+                        if user_id == my_id:
+                            if forward_self:
+                                await self.forward_processor(message, forward_to, client, protected)
+                        else:
                             await self.forward_processor(message, forward_to, client, protected)
-                    else:
-                        await self.forward_processor(message, forward_to, client, protected)
+                except errors.ChannelPrivate:
+                    await self.channel_error_message(message, bot_client, my_id)
+                    setting.forward_contact_enable(my_id, message.chat.id, 0)
+
 
     @staticmethod
     async def channel_error_message(message, bot_client, user_id):

@@ -55,7 +55,6 @@ if __name__ == "__main__":
     bot_client = bot
     print("OK")
     print("Trying to run user apps if exist")
-    print(users)
     for app in users:
         # Add a MessageHandler to each Client and start it
         users[app].add_handler(MessageHandler(user_message))

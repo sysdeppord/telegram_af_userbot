@@ -123,7 +123,6 @@ class Setting:
                                    "forward_self": 1}})
 
     def forward_contact_enable(self, user_id, forward_user_id, status):
-        # need fix fuckin dictionary for adding auto stop forwarding feature
         """
         Edit status forwarding for chat. NOT GLOBAL PAUSE FORWARDING!
         'user_id' - id bot user where use forwarding
