@@ -700,23 +700,24 @@ class Processor:
         if self.message.from_user.id == admin_id:
             await self.message.reply_text("Начало отправки уведомлений...")
             for user in setting.user_setting:
-                try:
-                    await self.client.send_message(int(user), text)
-                except errors.UserIsBlocked:
-                    info = await self.client.get_users(int(user))
-                    name = info.first_name
-                    if info.last_name:
-                        name = f"{info.first_name} {info.last_name}"
-                    await self.message.reply_text(f"{name} заблокировал бота!")
-                    blocked_text = ("Ты был заблокирован автоматически в ответ поскольку при обновлении бот увидел, что"
-                                    " ты его заблокировал!")
-                    setting.set_block_user(int(user), 1, blocked_text)
-                    for u in self.users:
-                        if u.name == f"u{user}":
-                            try:
-                                await u.stop()
-                            except:
-                                pass
+                if user in self.users:
+                    try:
+                        await self.client.send_message(int(user), text)
+                    except errors.UserIsBlocked:
+                        info = await self.client.get_users(int(user))
+                        name = info.first_name
+                        if info.last_name:
+                            name = f"{info.first_name} {info.last_name}"
+                        await self.message.reply_text(f"{name} заблокировал бота!")
+                        blocked_text = (
+                            "Ты был заблокирован автоматически в ответ поскольку при обновлении бот увидел, что"
+                            " ты его заблокировал!")
+                        setting.set_block_user(int(user), 1, blocked_text)
+                        print(self.users)
+                        await self.users[user].stop()
+                        del self.users[user]
+                else:
+                    print(f"User {user} is not in the dictionary, skipping...")
             await self.message.reply_text("Уведомление об окончании обновления отправлено!")
         elif self.message.from_user.id != admin_id:
             await self.message.reply_text("Данная комманда доступна только администратору!")
@@ -881,7 +882,7 @@ class GetInfo:
     async def get_user_app(user_id, users):
         name = f"u{user_id}"
         for app in users:
-            if app.name == name:
-                return app
+            if users[app].name == name:
+                return users[app]
 
 

@@ -76,8 +76,8 @@ class Setting:
         Add new user into database
         'user_id' - Telegram user id
         """
-        data = [(user_id, 1, 0, "offline", 0)]
-        self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?)", data)
+        data = [(user_id, 1, 0, "offline", 0, 0, "")]
+        self.cur.executemany("INSERT INTO my_setting VALUES(?, ?, ?, ?, ?, ?, ?)", data)
         self.user_setting.update({f"{user_id}": {"pause": 1,
                                                  "eula": 0,
                                                  "forward_type": "offline",

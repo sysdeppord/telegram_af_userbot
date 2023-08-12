@@ -211,9 +211,7 @@ class NotRegistered:
         user_handlers = UserHandlers(client)
         user_message = user_handlers.user_message
         name = f"u{user_id}"
-        users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
-                     device_model=device_model, system_version=system_version, workdir=f"./files/users/{name}"))
-        for user in users:
-            if user.name == name:
-                user.add_handler(MessageHandler(user_message))
-                await user.start()
+        users[user_id] = Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app+ver_app,
+                     device_model=device_model, system_version=system_version, workdir=f"./files/users/{name}")
+        users[user_id].add_handler(MessageHandler(user_message))
+        await users[user_id].start()
