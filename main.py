@@ -37,7 +37,6 @@ def check_and_create_folders():
 async def bot_callback_query(client, callback_data):
     processor = Sorter(client, users, callback_data=callback_data)
     await processor.callback_filter()
-    print(users)
 
 
 @bot.on_message(filters.private & ~filters.me) # old
