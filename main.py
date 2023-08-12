@@ -9,18 +9,18 @@ from proxy_class import setting
 
 bot = Client("bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token, workdir="./files/bot")
 
-users = []
+users = {}
 
 
 def add_user_client():
     print("Building users apps")
     for usr in setting.user_setting:
-        if setting.user_setting[f"{usr}"]["authorised"] and os.path.exists(f"./files/users/u{usr}"):
+        if setting.user_setting[f"{usr}"]["authorised"] and os.path.exists(f"./files/users/u{usr}") and setting.user_setting[f"{usr}"]["is_blocked"] != 1:
             user_id = usr
             name = f"u{user_id}"
-            users.append(Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app + ver_app,
-                                device_model=device_model, system_version=system_version,
-                                workdir=f"./files/users/{name}"))
+            users[user_id] = Client(name, api_id=api_id, api_hash=api_hash, app_version=name_app + ver_app,
+                                      device_model=device_model, system_version=system_version,
+                                      workdir=f"./files/users/{name}")
     print("OK")
 
 
@@ -55,14 +55,18 @@ if __name__ == "__main__":
     bot_client = bot
     print("OK")
     print("Trying to run user apps if exist")
-    for user in users:
+    print(users)
+    for app in users:
         # Add a MessageHandler to each Client and start it
-        user.add_handler(MessageHandler(user_message))
-        print(f"Running {user.name}")
-        user.start()
+        users[app].add_handler(MessageHandler(user_message))
+        print(f"Running {users[app].name}")
+        users[app].start()
         print("OK")
     idle()
     bot.stop()
-    for user in users:
-        print(f"Stopping {user.name}")
-        user.stop()
+    for app in users:
+        print(f"Stopping {users[app].name}")
+        try:
+            users[app].stop()
+        except:
+            print(f"Already stopped {users[app].name}")
