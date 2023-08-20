@@ -1,6 +1,6 @@
 import copy
 import time
-
+import shutil
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram import errors
 from cp_bot import keyboards
@@ -107,9 +107,13 @@ class Sorter:
             await self.processor.forward_my_off()
         elif data == "forward_my_on":
             await self.processor.forward_my_on()
+        elif data == "wipe_me":
+            await self.processor.wipe_me()
         elif data.startswith("code_"):
             not_registered = NotRegistered()
             await not_registered.input_auth_code(self.callback_data, self.user_id, self.users, self.client)
+        elif data.startswith("wipe_me_"):
+            await self.processor.start_wipe_user()
 
     async def message_filter(self):
         get_info = GetInfo()
@@ -717,6 +721,33 @@ class Processor:
             await self.message.reply_text("Уведомление об окончании обновления отправлено!")
         elif self.message.from_user.id != admin_id:
             await self.message.reply_text("Данная комманда доступна только администратору!")
+
+    async def wipe_me(self):
+        text = ("Ты действительно хочешь удалить свой аккаунт в боте? Это действие не обратимо! Все вои преимущества "
+                "(если такие были) будут также утрачены без возмешения!")
+        keyboard = keyboards.wipe_me
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                            reply_markup=reply_markup)
+
+    async def start_wipe_user(self):
+        if self.callback_data.data == "wipe_me_yes":
+            text = "Подожди немного, вайпаю твой аккаунт в боте и удаляю клиент."
+            await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
+            await self.users[str(self.chat_id)].stop()
+            del self.users[str(self.chat_id)]
+            setting.del_all_forwarding(self.chat_id)
+            setting.set_as_unregister(self.chat_id)
+            shutil.rmtree(f"./files/users/u{self.chat_id}")
+            text = "Твои данные успешно удалены!\nЧтобы заново аторизоваться используй /start"
+            await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                                reply_markup="")
+        elif self.callback_data.data == "wipe_me_no":
+            text = "Ну вот и всё, приплыл, а разговоров то было... Подумаешь - прийдёшь..."
+            keyboard = keyboards.bottom_button
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                                reply_markup=reply_markup)
 
 
 class Keyboard:

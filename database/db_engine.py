@@ -200,6 +200,18 @@ class Setting:
         self.con.commit()
         self.user_setting[f"{user_id}"]["forward_setting"] = {}
 
+    def set_as_unregister(self, user_id):
+        """
+        'user_id' - id bot user to set him as unregister
+        """
+        sql = f"DELETE FROM my_setting WHERE user = {user_id}"
+        self.cur.execute(sql)
+        self.con.commit()
+        sql = f"DROP TABLE u{user_id}_forward_setting"
+        self.cur.execute(sql)
+        self.con.commit()
+        del self.user_setting[f"{user_id}"]
+
     def set_block_user(self, user_id, status, blocked_text):
         """
         Set blocked status and text to user

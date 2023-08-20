@@ -34,9 +34,14 @@ setting = [
     [InlineKeyboardButton("🔁 Пересылать свои сообщения", callback_data="forward_my_step1")],
     [InlineKeyboardButton("🔀 Изменить канал для пересылки", callback_data="change_destination_step1")],
     [InlineKeyboardButton("🔥 Сжечь всё!", callback_data="burn_all")],
+    [InlineKeyboardButton("❌ Удалить свой аккаунт", callback_data="wipe_me")],
     [InlineKeyboardButton("🔰 Помощь по боту", callback_data="help")],
     [InlineKeyboardButton("ℹ️ О боте", callback_data="about")],
     [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+]
+wipe_me = [
+    [InlineKeyboardButton("ДА, УДАЛИТЬ МОЙ АККАУНТ", callback_data="wipe_me_yes")],
+    [InlineKeyboardButton("НЕТ, Я ХОЧУ НАЗАД К МАМОЧКЕ", callback_data="wipe_me_no")]
 ]
 add_select_destination = [
     [InlineKeyboardButton("🆕 Создать автоматически", callback_data="destination_create_new")],
