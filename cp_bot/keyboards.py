@@ -86,3 +86,7 @@ forward_my_on = [
     [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
     [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
 ]
+nav_list = [
+    [InlineKeyboardButton("Далее ⏩", callback_data="in_list_next")],
+    [InlineKeyboardButton("⏪ Назад", callback_data="in_list_previous")]
+]

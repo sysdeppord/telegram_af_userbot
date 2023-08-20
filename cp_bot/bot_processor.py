@@ -1,24 +1,20 @@
-import copy
 import time
 import shutil
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup
 from pyrogram import errors
 from cp_bot import keyboards
 from config.tg_config import admin_id
 from config.app_config import *
 from proxy_class import setting
 from cp_bot.reg_user import NotRegistered
+from cp_bot.keyboard_build import Keyboard
 
 
 release_note = "Об обновлении:\n" \
-               "- Авторизация через отправку контакта - теперь не нужно вводить свой телефон вручную, просто нажми " \
-               "на кнопку бота и телеграмм сам отправит твой контакт боту.\n" \
-               "- Авторизация через облачный пароль (не рекомендую использовать, лучше отключить на время входа до " \
-               "того, как будешь авторизовываться)\n" \
-               "- Ввод кода авторизации через клавиатуру бота.\n" \
-               "- Теперь если ты заблокируешь бота и он не сможет отправить тебе уведомление - ты получишь" \
-               " блокировку возможности пользоваться этим ботом\n" \
-               "- Возможно добавлены новые баги..."
+               "- Теперь ты можешь удалить свой аккаунт в боте! Просто найди необходимый пункт в меню...\n" \
+               "- Списки чатов при добавлении теперь листать намного проще! Тебе выводится по 10 чатов и ты " \
+               "можешь перелистывать их соответствующими кнопками\n" \
+               "- Пофикшены мелкие баги и возможно добавлены новые))))))..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
 
 
@@ -114,6 +110,8 @@ class Sorter:
             await not_registered.input_auth_code(self.callback_data, self.user_id, self.users, self.client)
         elif data.startswith("wipe_me_"):
             await self.processor.start_wipe_user()
+        elif data.startswith("in_list_"):
+            await self.processor.nav_list()
 
     async def message_filter(self):
         get_info = GetInfo()
@@ -194,7 +192,7 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
             user_list = await GetInfo().build_user_forward_info(user_app, self.chat_id)
             text = "Выбери пересылку от какого пользователя удалить:"
-            keyboard = await Keyboard().build(user_list, prefix="remove_")
+            keyboard = await Keyboard().build(user_list, prefix="remove_", user_id=self.chat_id)
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -220,7 +218,7 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
             user_list = await GetInfo().build_user_forward_info(user_app, self.chat_id)
             text = "Выбери пересылку от какого пользователя заморозить:"
-            keyboard = await Keyboard().build(user_list, prefix="freeze_")
+            keyboard = await Keyboard().build(user_list, prefix="freeze_", user_id=self.chat_id)
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -245,7 +243,7 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
             user_list = await GetInfo().build_user_forward_info(user_app, self.chat_id)
             text = "Выбери пересылку от какого пользователя разморозить:"
-            keyboard = await Keyboard().build(user_list, prefix="unfreeze_")
+            keyboard = await Keyboard().build(user_list, prefix="unfreeze_", user_id=self.chat_id)
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -270,7 +268,7 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
             user_list = await GetInfo().build_user_forward_info(user_app, self.chat_id)
             text = "Выбери какому пользователю изменить канал ля пересылки:"
-            keyboard = await Keyboard().build(user_list, prefix="change_destination_")
+            keyboard = await Keyboard().build(user_list, prefix="change_destination_", user_id=self.chat_id)
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -285,7 +283,7 @@ class Processor:
                f"\n\nВ какой канал пересылать сообщения?!"
         channel_list = await GetInfo().build_channel_list(user_app)
         setting.user_setting[f"{self.chat_id}"]["temp_uid"] = from_id
-        keyboard = await Keyboard().build(channel_list, prefix="select_channel_")
+        keyboard = await Keyboard().build(channel_list, prefix="select_channel_", user_id=self.chat_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
@@ -313,7 +311,7 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
             user_list = await GetInfo().build_user_forward_info(user_app, self.chat_id)
             text = "Выбери в чате с каким пользователем ты хочешь изменить статус пересылки своих сообщений:"
-            keyboard = await Keyboard().build(user_list, prefix="forward_my_step2_")
+            keyboard = await Keyboard().build(user_list, prefix="forward_my_step2_", user_id=self.chat_id)
             reply_markup = InlineKeyboardMarkup(keyboard)
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -376,7 +374,7 @@ class Processor:
                                             reply_markup="")
         cg_list = await GetInfo().build_chat_list(user_app, flag)
         text = "Выбери пересылку от какого пользователя разморозить:"
-        keyboard = await Keyboard().build(cg_list, prefix="add_cg_")
+        keyboard = await Keyboard().build(cg_list, prefix="add_cg_", user_id=self.chat_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
                                             reply_markup=reply_markup)
@@ -454,8 +452,8 @@ class Processor:
         text = "Идёт подготовка списка чатов на добавление в пересылку. Подожди немного..."
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         user_list = await GetInfo().build_chat_list(user_app)
-        text = "Выбери пересылку от какого пользователя разморозить:"
-        keyboard = await Keyboard().build(user_list, prefix="exist_chat_")
+        text = "Выбери чат с пользователем, которого нужно добавить в пересылку:"
+        keyboard = await Keyboard().build(user_list, prefix="exist_chat_", user_id=self.chat_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -489,7 +487,7 @@ class Processor:
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         user_list = await GetInfo().build_contact_list(user_app)
         text = "Выбери контакт какого пользователя хочешь добавить в пересылку:"
-        keyboard = await Keyboard().build(user_list, prefix="sync_contact_")
+        keyboard = await Keyboard().build(user_list, prefix="sync_contact_", user_id=self.chat_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
 
@@ -582,7 +580,7 @@ class Processor:
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup="")
         channel_list = await GetInfo().build_channel_list(user_app)
         text = f"Выбери канал куда пересылать сообщения от **\"[{name}](tg://user?id={from_id})\"**"
-        keyboard = await Keyboard().build(channel_list, prefix="select_existing_")
+        keyboard = await Keyboard().build(channel_list, prefix="select_existing_", user_id=self.chat_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
@@ -749,31 +747,13 @@ class Processor:
             await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
                                                 reply_markup=reply_markup)
 
+    async def nav_list(self):
+        text = self.callback_data.message.text
+        keyboard = await Keyboard().build(user_id=self.chat_id, cmd=self.callback_data.data)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
+                                            reply_markup=reply_markup)
 
-class Keyboard:
-    @staticmethod
-    async def build(list_for_build, prefix):
-        keyboard = []
-        if prefix == "select_existing_":
-            keyboard = copy.deepcopy(keyboards.select_existing)
-        elif prefix == "remove_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "freeze_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "unfreeze_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "select_channel_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "exist_chat_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "forward_my_step2_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        elif prefix == "add_cg_":
-            keyboard = copy.deepcopy(keyboards.bottom_button)
-        for item in list_for_build:
-            i = [InlineKeyboardButton(item[0], callback_data=f"{prefix}{item[1]}")]
-            keyboard.append(i)
-        return keyboard
 
 
 class GetInfo:

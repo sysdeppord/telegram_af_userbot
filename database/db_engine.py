@@ -54,6 +54,8 @@ class Setting:
                                                     "blocked_text": row[6],
                                                     "temp_callbackdata": None,
                                                     "temp_name": "",
+                                                    "kb_list": [],
+                                                    "kb_list_point": 0,
                                                     "forward_setting": {}}})
 
     def __load_forward_setting(self):
@@ -91,6 +93,8 @@ class Setting:
                                                  "blocked_text": "",
                                                  "temp_callbackdata": None,
                                                  "temp_name": "",
+                                                 "kb_list": [],
+                                                 "kb_list_point": 0,
                                                  "forward_setting": {}}})
         self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
                          f"forward_self INTEGER)")
