@@ -56,6 +56,7 @@ class Setting:
                                                     "temp_name": "",
                                                     "kb_list": [],
                                                     "kb_list_point": 0,
+                                                    "media_groups": {},
                                                     "forward_setting": {}}})
 
     def __load_forward_setting(self):
@@ -95,6 +96,7 @@ class Setting:
                                                  "temp_name": "",
                                                  "kb_list": [],
                                                  "kb_list_point": 0,
+                                                 "media_groups": {},
                                                  "forward_setting": {}}})
         self.cur.execute(f"CREATE TABLE u{user_id}_forward_setting(user INTEGER, forward_to INTEGER, enable INTEGER, "
                          f"forward_self INTEGER)")

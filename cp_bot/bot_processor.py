@@ -14,6 +14,8 @@ release_note = "Об обновлении:\n" \
                "- Теперь ты можешь удалить свой аккаунт в боте! Просто найди необходимый пункт в меню...\n" \
                "- Списки чатов при добавлении теперь листать намного проще! Тебе выводится по 10 чатов и ты " \
                "можешь перелистывать их соответствующими кнопками\n" \
+               "- Пофикшена костылём пересылка группы медиафайлов (2 и более фото/видео), теперь они пересылаются " \
+               "группой как и должны\n" \
                "- Пофикшены мелкие баги и возможно добавлены новые))))))..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
 
@@ -769,14 +771,17 @@ class GetInfo:
 
     async def get_user_name(self, client, user_id):
         name = None
-        if user_id > 0:
-            user = await client.get_users(user_id)
-            if user.last_name:
-                name = f"{user.first_name} {user.last_name}"
-            else:
-                name = user.first_name
-        elif user_id < 0:
-            name = await self.get_channel_name(client, user_id)
+        try:
+            if user_id > 0:
+                user = await client.get_users(user_id)
+                if user.last_name:
+                    name = f"{user.first_name} {user.last_name}"
+                else:
+                    name = user.first_name
+            elif user_id < 0:
+                name = await self.get_channel_name(client, user_id)
+        except errors.PeerIdInvalid as e:
+            name = f"Пользователь УДАЛЁН ИЛИ НЕДОСТУПЕН!!!\nTG error:\n{e}"
         return name
 
     @staticmethod
