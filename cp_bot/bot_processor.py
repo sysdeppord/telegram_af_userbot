@@ -772,15 +772,17 @@ class GetInfo:
 
     async def get_user_name(self, client, user_id):
         name = None
-        if user_id > 0:
-            user = await client.get_users(user_id)
-            if user.last_name:
-                name = f"{user.first_name} {user.last_name}"
-            else:
-                name = user.first_name
-        elif user_id < 0:
-            name = await self.get_channel_name(client, user_id)
-
+        try:
+            if user_id > 0:
+                user = await client.get_users(user_id)
+                if user.last_name:
+                    name = f"{user.first_name} {user.last_name}"
+                else:
+                    name = user.first_name
+            elif user_id < 0:
+                name = await self.get_channel_name(client, user_id)
+        except errors.PeerIdInvalid as e:
+            name = f"Пользователь не найден! Попробуй передобавить этого пользователя заново.\nTelegram error:\n{e}"
         return name
 
     @staticmethod
