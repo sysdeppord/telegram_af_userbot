@@ -540,7 +540,8 @@ class Processor:
             in_list = await GetInfo().in_list(from_id, self.chat_id)
             if in_list:
                 text = "Этот пользователь и так есть в списке пересылку!"
-                await self.client.answer_callback_query(self.callback_data.id, text=text, show_alert=True)
+                temp_callback_data = setting.user_setting[f"{self.chat_id}"]["temp_callbackdata"]
+                await self.client.answer_callback_query(temp_callback_data.id, text=text, show_alert=True)
                 await self.message.delete()
             elif not in_list:
                 text = "Подожди пожалуйста, получаю необходимую информацию..."
@@ -771,17 +772,15 @@ class GetInfo:
 
     async def get_user_name(self, client, user_id):
         name = None
-        try:
-            if user_id > 0:
-                user = await client.get_users(user_id)
-                if user.last_name:
-                    name = f"{user.first_name} {user.last_name}"
-                else:
-                    name = user.first_name
-            elif user_id < 0:
-                name = await self.get_channel_name(client, user_id)
-        except errors.PeerIdInvalid as e:
-            name = f"Пользователь УДАЛЁН ИЛИ НЕДОСТУПЕН!!!\nTG error:\n{e}"
+        if user_id > 0:
+            user = await client.get_users(user_id)
+            if user.last_name:
+                name = f"{user.first_name} {user.last_name}"
+            else:
+                name = user.first_name
+        elif user_id < 0:
+            name = await self.get_channel_name(client, user_id)
+
         return name
 
     @staticmethod
