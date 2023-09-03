@@ -33,8 +33,8 @@ class Keyboard:
             elif prefix == "sync_contact_":
                 keyboard_add = copy.deepcopy(keyboards.bottom_button)
             if len(list_for_build) < 11:
-                kb[0].append(keyboard_add[0])
-                kb[0].append(keyboard_add[1])
+                kb[0].append(copy.deepcopy(keyboards.bottom_button[0]))
+                kb[0].append(copy.deepcopy(keyboards.bottom_button[1]))
             else:
                 position = 0
                 end_position = len(kb) - 1
