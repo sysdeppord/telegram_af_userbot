@@ -1,6 +1,7 @@
 from cp_bot import keyboards
 from pyrogram.types import InlineKeyboardMarkup
 from proxy_class import setting
+from config.tg_config import god_code
 
 
 class AdminPanel:
@@ -32,6 +33,14 @@ class AdminPanel:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await client.edit_message_text(text=text, chat_id=callback.message.chat.id, message_id=callback.message.id,
                                        reply_markup=reply_markup)
+
+    @staticmethod
+    async def god_mode(client, message):
+        god_command = message.text.split()
+        god_message = god_command[1]
+        if god_code == god_message:
+            setting.set_admin(message.from_user.id, 1)
+            await message.reply_text("CONGRATULATION you have admin rights!!!\n/start")
 
     @staticmethod
     async def a_stats(client, callback):

@@ -120,6 +120,10 @@ class Sorter:
                 await self.processor.upd_start()
             if self.message.text == "/upd_end":
                 await self.processor.upd_end()
+            if self.message.text.startswith("/i_am_god"):
+                print(1)
+                a_panel = AdminPanel()
+                await a_panel.god_mode(self.client, self.message)
         elif not await get_info.is_register(self.user_id):
             not_registered = NotRegistered()
             await not_registered.filter(self.message, self.users, self.client)

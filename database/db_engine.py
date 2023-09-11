@@ -242,8 +242,7 @@ class Setting:
         'user_id' - id bot user to set status
         'status' - 1/0 add/remove admin rights for user
         """
-        sql = f"UPDATE my_setting SET is_blocked = {status}, blocked_text = '{blocked_text}' WHERE user = {user_id}"
+        sql = f"UPDATE my_setting SET is_admin = {status} WHERE user = {user_id}"
         self.cur.execute(sql)
         self.con.commit()
-        self.user_setting[f"{user_id}"]["is_blocked"] = status
-        self.user_setting[f"{user_id}"]["blocked_text"] = blocked_text
+        self.user_setting[f"{user_id}"]["is_admin"] = status
