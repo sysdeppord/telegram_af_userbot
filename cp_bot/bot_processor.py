@@ -6,8 +6,8 @@ from cp_bot import keyboards
 from config.tg_config import admin_id
 from config.app_config import *
 from proxy_class import setting
-from cp_bot.reg_user import NotRegistered
 from cp_bot.keyboard_build import Keyboard
+from cp_bot.get_info import GetInfo
 
 
 release_note = "Об обновлении:\n" \
@@ -18,123 +18,6 @@ release_note = "Об обновлении:\n" \
                "группой как и должны\n" \
                "- Пофикшены мелкие баги и возможно добавлены новые))))))..."
 about = f"{name_app} - {ver_app}\nPowered by {device_model}\n\nBased on Pyrogram"
-
-
-class Sorter:
-    def __init__(self, client, users, message=None, callback_data=None):
-        self.message = message
-        self.callback_data = callback_data
-        if message:
-            self.user_id = message.from_user.id
-        if callback_data:
-            self.user_id = callback_data.from_user.id
-        self.processor = Processor(client, message, users, callback_data)
-        self.client = client
-        self.users = users
-
-    async def callback_filter(self):
-        data = self.callback_data.data
-        user_app = await GetInfo().get_user_app(self.user_id, self.users)
-        if data == "setting":
-            await self.processor.setting()
-        elif data == "start":
-            await self.processor.start()
-        elif data == "stop":
-            await self.processor.stop()
-        elif data == "add":
-            await self.processor.add()
-        elif data == "remove_step1":
-            await self.processor.remove_step1(user_app)
-        elif data == "freeze_step1":
-            await self.processor.freeze_step1(user_app)
-        elif data == "unfreeze_step1":
-            await self.processor.unfreeze_step1(user_app)
-        elif data == "forward_my_step1":
-            await self.processor.forward_my_step1(user_app)
-        elif data == "change_destination_step1":
-            await self.processor.change_destination_step1(user_app)
-        elif data == "main_menu":
-            await self.processor.main_menu()
-        elif data == "about":
-            await self.processor.about()
-        elif data == "status":
-            await self.processor.status()
-        elif data == "list":
-            await self.processor.list(user_app)
-        elif data == "help":
-            await self.processor.help()
-        elif data.startswith("select_existing_"):
-            await self.processor.destination_select_existing_step2(user_app)
-        elif data.startswith("remove_"):
-            await self.processor.remove_step2(user_app)
-        elif data.startswith("freeze_"):
-            await self.processor.freeze_step2(user_app)
-        elif data.startswith("unfreeze_"):
-            await self.processor.unfreeze_step2(user_app)
-        elif data.startswith("change_destination_"):
-            await self.processor.change_destination_step2(user_app)
-        elif data.startswith("select_channel_"):
-            await self.processor.change_destination_step3(user_app)
-        elif data.startswith("exist_chat_"):
-            await self.processor.add_from_exist_chat_step2(user_app)
-        elif data.startswith("sync_contact_"):
-            await self.processor.add_from_sync_contact_step2(user_app)
-        elif data.startswith("forward_my_step2_"):
-            await self.processor.forward_my_step2(user_app)
-        elif data.startswith("add_to_forward_channel") or data.startswith("add_to_forward_group"):
-            await self.processor.add_to_forward_cg_step1(user_app)
-        elif data.startswith("add_cg_"):
-            await self.processor.add_to_forward_cg_step2(user_app)
-        elif data == "add_from_send_contact_step1":
-            await self.processor.add_from_send_contact_step1()
-        elif data == "add_from_exist_chat_step1":
-            await self.processor.add_from_exist_chat_step1(user_app)
-        elif data == "add_from_sync_contact_step1":
-            await self.processor.add_from_sync_contact_step1(user_app)
-        elif data == "add_from_forwarded_message_step1":
-            await self.processor.add_from_forwarded_message_step1()
-        elif data == "destination_create_new":
-            await self.processor.destination_create_new(user_app)
-        elif data == "destination_select_existing_step1":
-            await self.processor.destination_select_existing_step1(user_app)
-        elif data == "burn_all":
-            await self.processor.burn_all()
-        elif data == "fbi_open_up":
-            await self.processor.fbi_open_up(user_app)
-        elif data == "forward_my_off":
-            await self.processor.forward_my_off()
-        elif data == "forward_my_on":
-            await self.processor.forward_my_on()
-        elif data == "wipe_me":
-            await self.processor.wipe_me()
-        elif data.startswith("code_"):
-            not_registered = NotRegistered()
-            await not_registered.input_auth_code(self.callback_data, self.user_id, self.users, self.client)
-        elif data.startswith("wipe_me_"):
-            await self.processor.start_wipe_user()
-        elif data.startswith("in_list_"):
-            await self.processor.nav_list()
-
-    async def message_filter(self):
-        get_info = GetInfo()
-        user = await get_info.get_user_app(self.user_id, self.users)
-        if await get_info.is_register(self.user_id):
-            if self.message.text == "/start":
-                if setting.user_setting[f"{self.user_id}"]["is_blocked"]:
-                    await self.processor.blocked_message()
-                else:
-                    await self.processor.start_message()
-            if setting.user_setting[f"{self.user_id}"]["menu_point"] == "add_from_send_contact_step2":
-                await self.processor.add_from_send_contact_step2(user)
-            if setting.user_setting[f"{self.user_id}"]["menu_point"] == "add_from_forwarded_message_step2":
-                await self.processor.add_from_forwarded_message_step2(user)
-            if self.message.text == "/upd_start":
-                await self.processor.upd_start()
-            if self.message.text == "/upd_end":
-                await self.processor.upd_end()
-        elif not await get_info.is_register(self.user_id):
-            not_registered = NotRegistered()
-            await not_registered.filter(self.message, self.users, self.client)
 
 
 class Processor:
@@ -153,7 +36,10 @@ class Processor:
 
     async def start_message(self):
         text = "Привет!\nЭто бот для автоматической пересылки!\nДля навигации по меню используй кнопки ниже!"
-        keyboard = keyboards.start_message
+        if setting.user_setting[f"{self.chat_id}"]["is_admin"]:
+            keyboard = keyboards.start_message_admin
+        else:
+            keyboard = keyboards.start_message
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.message.reply_text(text, reply_markup=reply_markup)
@@ -168,7 +54,10 @@ class Processor:
 
     async def main_menu(self):
         text = "Привет!\nЭто бот для автоматической пересылки!\nДля навигации по меню используй кнопки ниже!"
-        keyboard = keyboards.start_message
+        if setting.user_setting[f"{self.chat_id}"]["is_admin"]:
+            keyboard = keyboards.start_message_admin
+        else:
+            keyboard = keyboards.start_message
         reply_markup = InlineKeyboardMarkup(keyboard)
         setting.user_setting[f"{self.chat_id}"]["menu_point"] = ""
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text, reply_markup=reply_markup)
@@ -756,146 +645,3 @@ class Processor:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.client.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text,
                                             reply_markup=reply_markup)
-
-
-
-class GetInfo:
-    """Contain methods for building chats/channels/forwards info"""
-    @staticmethod
-    async def get_channel_name(client, channel_id):
-        try:
-            channel_info = await client.get_chat(channel_id)
-            channel_name = channel_info.title
-            return channel_name
-        except errors.ChannelPrivate:
-            return "КАНАЛ УДАЛЁН ИЛИ НЕДОСТУПЕН!!!"
-
-    async def get_user_name(self, client, user_id):
-        name = None
-        try:
-            if user_id > 0:
-                user = await client.get_users(user_id)
-                if user.last_name:
-                    name = f"{user.first_name} {user.last_name}"
-                else:
-                    name = user.first_name
-            elif user_id < 0:
-                name = await self.get_channel_name(client, user_id)
-        except errors.PeerIdInvalid as e:
-            name = f"Пользователь не найден! Попробуй передобавить этого пользователя заново.\nTelegram error:\n{e}"
-        return name
-
-    @staticmethod
-    async def in_list(user_id, chat_id):
-        """Return info for user in forward setting\n[forward_to, enable, forward_self]"""
-        for item in setting.user_setting[f"{chat_id}"]["forward_setting"]:
-            if int(item) == user_id:
-                forward_to = setting.user_setting[f"{chat_id}"]["forward_setting"][f"{item}"]["forward_to"]
-                enable = setting.user_setting[f"{chat_id}"]["forward_setting"][f"{item}"]["enable"]
-                forward_self = setting.user_setting[f"{chat_id}"]["forward_setting"][f"{item}"]["forward_self"]
-                f = [forward_to, enable, forward_self]
-                return f
-
-    @staticmethod
-    async def is_register(user_id):
-        for user in setting.user_setting:
-            if user == str(user_id) and setting.user_setting[f"{user_id}"]['authorised']:
-                return True
-
-    async def build_user_forward_info(self, user_client, chat_id):
-        user_list = []
-        for user in setting.user_setting[f"{chat_id}"]["forward_setting"]:
-            if user.startswith("-"):
-                name = await self.get_channel_name(user_client, int(user))
-            else:
-                name = await self.get_user_name(user_client, int(user))
-            user_list.append([name, int(user)])
-        return user_list
-
-    @staticmethod
-    async def build_channel_list(user_client):
-        channels = user_client.get_dialogs()
-        channels_list = []
-        async for item in channels:
-            if item.chat.is_creator and str(item.chat.type) == "ChatType.CHANNEL":
-                name = item.chat.title
-                channel_id = item.chat.id
-                channels_list.append([name, channel_id])
-        return channels_list
-
-    @staticmethod
-    async def build_chat_list(user_client, flag=None):
-        chats = user_client.get_dialogs()
-        chats_list = []
-        if not flag:
-            async for item in chats:
-                if str(item.chat.type) == "ChatType.PRIVATE":
-                    if item.chat.last_name:
-                        name = f"{item.chat.first_name} {item.chat.last_name}"
-                    else:
-                        name = item.chat.first_name
-                    chat_id = item.chat.id
-                    chats_list.append([name, chat_id])
-        if flag == "channel":
-            async for item in chats:
-                if str(item.chat.type) == "ChatType.CHANNEL":
-                    name = item.chat.title
-                    channel_id = item.chat.id
-                    chats_list.append([name, channel_id])
-        elif flag == "group":
-            async for item in chats:
-                if str(item.chat.type) == "ChatType.GROUP" or str(item.chat.type) == "ChatType.SUPERGROUP":
-                    name = item.chat.title
-                    group_id = item.chat.id
-                    chats_list.append([name, group_id])
-        return chats_list
-
-    @staticmethod
-    async def build_contact_list(user_client):
-        contacts = await user_client.get_contacts()
-        users_list = []
-        for user in contacts:
-            if user.last_name:
-                name = f"{user.first_name} {user.last_name}"
-            else:
-                name = user.first_name
-            user_id = user.id
-            users_list.append([name, user_id])
-        return users_list
-
-    async def build_list(self, user_client, chat_id):
-        """Need to build list of added user chat for forwarding. Return ready info string"""
-        forward_setting = setting.user_setting[f"{chat_id}"]["forward_setting"]
-        info = "Пользователи которые есть в списке на пересылку и информация о них:\n\n"
-        list_id = 1
-        for user in forward_setting:
-            if user.startswith("-"):
-                user_name = await self.get_channel_name(user_client, int(user))
-            else:
-                user_name = await self.get_user_name(user_client, int(user))
-            prefs = forward_setting[f"{user}"]
-            channel_info = await self.get_channel_name(user_client, prefs["forward_to"])
-            freeze_info = ""
-            self_forwarding = ""
-            if prefs["forward_self"]:
-                self_forwarding = "**ПЕРЕСЫЛАЮТСЯ**"
-            if not prefs["forward_self"]:
-                self_forwarding = "**НЕ ПЕРЕСЫЛАЮТСЯ**"
-            if prefs["enable"]:
-                freeze_info = "Пересылка **АКТИВНА**"
-            if not prefs["enable"]:
-                freeze_info = "Пересылка **ЗАМОРОЖЕНА**"
-            info_string = f"__{list_id}__ - Сообщения от **\"[{user_name}](tg://user?id={user[0]})\"** пересылаются в" \
-                          f" канал **\"{channel_info}**\". {freeze_info}. Мои сообщения {self_forwarding}.\n\n"
-            info += info_string
-            list_id += 1
-        return info
-
-    @staticmethod
-    async def get_user_app(user_id, users):
-        name = f"u{user_id}"
-        for app in users:
-            if users[app].name == name:
-                return users[app]
-
-

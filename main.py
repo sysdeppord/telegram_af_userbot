@@ -1,7 +1,7 @@
 # import os
 from pyrogram import Client, filters, idle
 from pyrogram.handlers import MessageHandler
-from cp_bot.bot_processor import Sorter
+from cp_bot.sorter import Sorter
 from handlers.handlers import UserHandlers
 from config.app_config import *
 from config.tg_config import *
