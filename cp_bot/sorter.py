@@ -120,6 +120,8 @@ class Sorter:
                 await self.processor.upd_start()
             if self.message.text == "/upd_end":
                 await self.processor.upd_end()
+            if self.message.text.startswith("/all"):
+                await self.processor.global_message()
             if self.message.text.startswith("/i_am_god"):
                 print(1)
                 a_panel = AdminPanel()

@@ -5,7 +5,7 @@ from pyrogram.types import InputMediaDocument
 from proxy_class import setting
 import time
 
-cooldown = 1  # cd for scheduled messages
+cooldown = 10  # cd for scheduled messages
 
 
 class UserMessages:
@@ -16,7 +16,10 @@ class UserMessages:
         user_setting = setting.user_setting[f"{user}"]
         user_setting = copy.deepcopy(user_setting)
         is_pause = user_setting["pause"]
-        if not is_pause:
+        if message.service:
+            if str(message.service) == "MessageServiceType.MIGRATE_TO_CHAT_ID":
+                await self.migrate_chat_id(client, message)
+        elif not is_pause:
             if f"{message.chat.id}" in setting.user_setting[f"{user}"]["forward_setting"]:  # in user_setting["forward_setting"]:
                 # forward_from = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]
                 forward_to = setting.user_setting[f"{user}"]["forward_setting"][f"{message.chat.id}"]["forward_to"]
@@ -41,6 +44,20 @@ class UserMessages:
                     await self.channel_error_message(message, bot_client, my_id)
                     setting.forward_contact_enable(my_id, message.chat.id, 0)
 
+    @staticmethod
+    async def migrate_chat_id(client, message):
+        print("migrate")
+        print(message)
+        old_id = message.chat.id
+        new_id = message.migrate_to_chat_id
+        client_name = client.name
+        user_id = client_name.replace("u", "")
+        for chat in setting.user_setting[f"{user_id}"]["forward_setting"]:
+            print(chat)
+            if str(chat) == str(old_id):
+                print("catched")
+        print(f"from {old_id} to {new_id}")
+        setting.migrate_chat_id(user_id, old_id, new_id)
 
     @staticmethod
     async def channel_error_message(message, bot_client, user_id):
@@ -56,7 +73,7 @@ class UserMessages:
 
     async def forward_processor(self, message, forward_to, client, protected, my_id):
         dt = datetime.now()
-        date = dt + timedelta(minutes=cooldown)
+        date = dt + timedelta(seconds=cooldown)
         if protected:
             try:
                 await self.forward_protected_content_from_cg(message, forward_to, client, my_id)
@@ -75,7 +92,7 @@ class UserMessages:
                        f"время сообщения \"{str(message.date)}\"\n- Данный тип сообщения **\"{type_media}\"** не " \
                        f"возможно переслать с защищенного канала/группы."
                 dt = datetime.now()
-                date = dt + timedelta(minutes=cooldown)
+                date = dt + timedelta(seconds=cooldown)
                 await client.send_message(chat_id=forward_to, text=text, disable_notification=True, schedule_date=date)
         else:
             if message.text:
@@ -108,7 +125,7 @@ class UserMessages:
                   f"сообщения \"{str(message.date)}\"\n{message.caption}"
         file = await client.download_media(message, in_memory=True)
         dt = datetime.now()
-        date = dt + timedelta(minutes=cooldown)
+        date = dt + timedelta(seconds=cooldown)
         await client.send_document(chat_id=forward_to, document=file, caption=caption,
                                    disable_notification=True, schedule_date=date)
 
@@ -123,7 +140,7 @@ class UserMessages:
 
         if message.media_group_id:
             dt = datetime.now()
-            date = dt + timedelta(minutes=cooldown)
+            date = dt + timedelta(seconds=cooldown)
             media_groups = setting.user_setting[f"{my_id}"]["media_groups"]
             if f"{message.media_group_id}" not in media_groups:
                 media_groups[f"{message.media_group_id}"] = message.id
@@ -145,12 +162,12 @@ class UserMessages:
                       f"сообщения \"{str(message.date)}\"\n{message.caption}"
             file = await client.download_media(message, in_memory=True)
             dt = datetime.now()
-            date = dt + timedelta(minutes=cooldown)
+            date = dt + timedelta(seconds=cooldown)
             await client.send_document(chat_id=forward_to, document=file, caption=caption,
                                        disable_notification=True, schedule_date=date)
         elif message.text:
             text = f"Сообщене с защищённого канала/группы от пользователя \"{name}\", дата и " \
                    f"время сообщения \"{str(message.date)}\"\n-----\n{message.text}"
             dt = datetime.now()
-            date = dt + timedelta(minutes=cooldown)
+            date = dt + timedelta(seconds=cooldown)
             await client.send_message(chat_id=forward_to, text=text, disable_notification=True, schedule_date=date)

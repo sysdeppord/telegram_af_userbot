@@ -10,6 +10,7 @@ class Setting:
         self.cur = self.con.cursor()
         self.__load_user_setting()
         self.__load_forward_setting()
+        #print(self.user_setting)
 
     def __load_user_setting(self):
         """Check and load main setting from database"""
@@ -246,3 +247,17 @@ class Setting:
         self.cur.execute(sql)
         self.con.commit()
         self.user_setting[f"{user_id}"]["is_admin"] = status
+
+    def migrate_chat_id(self, user_id, old_chat_id, new_chat_id):
+        sql = f"UPDATE u{user_id}_forward_setting SET user = {new_chat_id} WHERE user = {old_chat_id}"
+        print(sql)
+        self.cur.execute(sql)
+        #print("sql exec")
+        self.con.commit()
+        #print("sql commit")
+        #print(self.user_setting[f"{user_id}"]["forward_setting"])
+        old_setting = self.user_setting[f"{user_id}"]["forward_setting"][f"{old_chat_id}"]  # todo CHECK this shit
+        remove_old = self.user_setting[f"{user_id}"]["forward_setting"].pop(str(old_chat_id))
+        self.user_setting[f"{user_id}"]["forward_setting"][f"{new_chat_id}"] = old_setting
+        #print(self.user_setting[f"{user_id}"]["forward_setting"])
+        #print("dict updated")
