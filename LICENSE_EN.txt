@@ -1,0 +1,24 @@
+End-User License Agreement (EULA) for the Software Product (30.10.2024)
+1. Free Distribution
+The software product is provided free of charge and may be freely distributed.
+
+2. Distributed "As Is"
+The software product is distributed "as is" without any warranties, express or implied, including, but not limited to, implied warranties of merchantability or fitness for a particular purpose.
+
+3. Right to Modify and Attribution Requirement
+Users are allowed to modify the software product, provided that the original author is credited in the modified version.
+
+4. Preservation of Copyrights
+Removing, altering, or concealing copyright notices or author attributions in the original or modified versions of the software product is prohibited.
+
+5. Restriction on Charging for Usage
+Users are not allowed to charge others for the use of the software product’s functionality.
+
+6. Limitation of Liability
+The author assumes no responsibility for any consequences of using the software product, including, but not limited to, account hacking, account bans by third-party services, instability, or any other potential outcomes.
+
+7. Copyrights
+The original author retains the copyright for the software product. Copyrights for third-party libraries used in this software product are retained by their respective owners.
+
+8. Right to Change License and Commercial Use
+The author reserves the right to change the license of the software product, charge for its use, and sell or transfer the rights to the software product.
