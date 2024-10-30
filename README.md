@@ -1,7 +1,7 @@
 # telegram_af_userbot
 Userbot for auto forward messages from users UA|EN|RU description
 
-UA (12.08.2023 v 0.1.2.0 beta)
+UA (30.10.2024 v 0.1.2.6 beta)
 Юзербот (той який авторизується як додаток у ваш Телеграм аккаунт, не плутати зі звичайним ботом в Телеграм) для автоматичних пересилань особистих повідомлень від користувачів
 Базується на бібліотеці "Pyrogram"
 
@@ -74,7 +74,7 @@ UA (12.08.2023 v 0.1.2.0 beta)
 - Про статус онлайн і зайві сповіщення - Пересилання повідомлень реалізоване через відкладені повідомлення з таймером в одну хвилину (можна налаштувати в файлі "user_processor.py" -> class UserMessages -> forward_processor -> date -> minutes=1). Це пов'язане з тим, що при прямій пересилці в тебе активується статус "онлайн". Це не моя забаганка, так реалізований механізм самого Телеграм. Також, хоча відкладені повідомлення публікуються зі статусом "не сповіщати" тобі приходитимуть сповіщення. Частково це лікується вимкненням сповіщеннів від каналу. Чому частково? На телефоні (принаймні з ОС Андроїд) після цього сповіщення перестають йти, але в телеграм клієнті для ПК спливаючі сповіщення лишаться, бо так влаштований телеграм клієнт.
 - Користувач відредагував повідомлення, а в пересланих воно не змінилося  - Звісно, так працюють переслан повідомлення, спробуй сам  переслати своє повідомлення а потім відредагувати його і порівняти. Тимпаче бот пересилає їх одразу коли вони приходять  (можливо вийняток групи медіа та групи пересланих повідомлень).
 
-EN (12.08.2023 v 0.1.2.0 beta)
+EN (30.10.2024 v 0.1.2.6 beta)
 A userbot (the one that logs in as an application to your Telegram account, not to be confused with a regular Telegram bot) for automatic sending of personal messages from users
 Based on the "Pyrogram" library
 
@@ -147,7 +147,7 @@ Possible problems:
 - About online status and redundant notifications - Forwarding of messages is implemented through delayed messages with a timer of one minute (can be configured in the file "user_processor.py" -> class UserMessages -> forward_processor -> date -> minutes=1). This is due to the fact that the "online" status is activated for you during a direct transfer. This is not my whim, this is the implemented mechanism of Telegram itself. Also, although snoozed messages are published with a "do not notify" status, you will receive notifications. This is partially remedied by turning off notifications from the channel. Why partially? On the phone (at least with the Android OS), notifications stop going after this, but pop-up notifications remain in the Telegram client for PC, because this is how the Telegram client is arranged.
 - The user edited the message, but it has not changed in forwarded messages - Of course, this is how forwarded messages work, try to forward your message yourself and then edit it and compare. Instead, the bot forwards them as soon as they arrive (with the possible exception of the media group and forwarded message group).
 
-RU (12.08.2023 v 0.1.2.0 beta)
+RU (30.10.2024 v 0.1.2.6 beta)
 Юзербот (тот который авторизуется как приложение в ваш Телеграм аккаунт, не путать с обычным ботом в Телеграм) для автоматических пересылок личных сообщений от пользователей
 Базируется на библиотеке "Pyrogram"
 
