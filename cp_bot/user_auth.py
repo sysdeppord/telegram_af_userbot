@@ -71,3 +71,4 @@ class UserAuth:
     @staticmethod
     async def remove_user_app(user_id):
         del user_apps[user_id]
+

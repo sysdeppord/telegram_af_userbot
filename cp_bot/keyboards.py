@@ -34,9 +34,14 @@ setting = [
     [InlineKeyboardButton("🔁 Пересылать свои сообщения", callback_data="forward_my_step1")],
     [InlineKeyboardButton("🔀 Изменить канал для пересылки", callback_data="change_destination_step1")],
     [InlineKeyboardButton("🔥 Сжечь всё!", callback_data="burn_all")],
+    [InlineKeyboardButton("❌ Удалить свой аккаунт", callback_data="wipe_me")],
     [InlineKeyboardButton("🔰 Помощь по боту", callback_data="help")],
     [InlineKeyboardButton("ℹ️ О боте", callback_data="about")],
     [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+]
+wipe_me = [
+    [InlineKeyboardButton("ДА, УДАЛИТЬ МОЙ АККАУНТ", callback_data="wipe_me_yes")],
+    [InlineKeyboardButton("НЕТ, Я ХОЧУ НАЗАД К МАМОЧКЕ", callback_data="wipe_me_no")]
 ]
 add_select_destination = [
     [InlineKeyboardButton("🆕 Создать автоматически", callback_data="destination_create_new")],
@@ -80,4 +85,31 @@ forward_my_on = [
     [InlineKeyboardButton("🆕 ВКЛЮЧИТЬ", callback_data="forward_my_on")],
     [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
     [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
+]
+nav_list = [
+    [InlineKeyboardButton("Далее ⏩", callback_data="in_list_next")],
+    [InlineKeyboardButton("⏪ Назад", callback_data="in_list_previous")]
+]
+admin_menu = [
+    [InlineKeyboardButton("📊 Статистика", callback_data="a_stats")],
+    [InlineKeyboardButton("🗒 Пользователи", callback_data="a_users")],
+    [InlineKeyboardButton("⛔️ Забанить пользователя", callback_data="a_ban")],
+    [InlineKeyboardButton("🔰 Разбанить пользователя", callback_data="a_unban")],
+    [InlineKeyboardButton("✅ Выдать админ права", callback_data="a_make_admin")],
+    [InlineKeyboardButton("❌ Забрать админ права", callback_data="a_ban_admin")],
+    [InlineKeyboardButton("📥 Посмотреть запросы", callback_data="a_view_requests")],
+    [InlineKeyboardButton("🆕 Создать код приглашения", callback_data="a_create_invite")],
+    [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
+    [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
+]
+a_bottom_button = [
+    [InlineKeyboardButton("💫 В админ панель", callback_data="a_panel")],
+    [InlineKeyboardButton("⚙️ В меню настроек", callback_data="setting")],
+    [InlineKeyboardButton("🏠 В главное меню", callback_data="main_menu")]
+]
+start_message_admin = [
+    [InlineKeyboardButton("📶 Статус", callback_data="status")],
+    [InlineKeyboardButton("⚙️ Настройки", callback_data="setting")],
+    [InlineKeyboardButton("ℹ️ О боте", callback_data="about")],
+    [InlineKeyboardButton("👁 Admin panel", callback_data="a_panel")]
 ]

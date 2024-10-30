@@ -29,6 +29,7 @@ class NotRegistered:
             reply_markup = ReplyKeyboardRemove()
             await client.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
             phone_number = message.contact.phone_number
+            phone_number = await self.only_digit(phone_number)
             if phone_number.isdigit():
                 auth = UserAuth()
                 try:
@@ -51,7 +52,6 @@ class NotRegistered:
 
             else:
                 await message.reply_text("Ты отправил не номер телефона! Попробуй ещё раз!")
-
 
     async def input_auth_code(self, callback_data, user_id, users, client):
         message_id = callback_data.message.id
@@ -132,19 +132,18 @@ class NotRegistered:
                 text += f"\nПодсказка к паролю: \"{hint}\""
             setting.user_setting[f"{user_id}"]["menu_point"] = "cloud_password"
             await client.send_message(chat_id=user_id, text=text)
-        except FloodWait as time:
-            text = (f"Ты сильно часто вводил неправильный пароль!\nТелеграм заморозил попытки входа на {time} секунд.\n"
-                    f"Мы сбросили данные авторизации, возвращайся когда пройдёт это время и снова запусти /start")
+        except FloodWait as err:
+            text = (f"Ты сильно часто вводил неправильный пароль!\nТелеграм заморозил попытки входа.\n"
+                    f"Мы сбросили данные авторизации, возвращайся когда пройдёт это время и снова запусти /start\n"
+                    f"Telegram error: {err}")
             setting.user_setting[f"{user_id}"]["menu_point"] = ""
             await client.send_message(chat_id=user_id, text=text)
+            await auth.remove_user_app(user_id)
         except AttributeError:
             text = (f"Ты измения пароль во время авторизации?! Помянем!\nМы сбросили данные авторизации, и пройди "
                     f"авторизацию с нуля! /start")
             setting.user_setting[f"{user_id}"]["menu_point"] = ""
             await client.send_message(chat_id=user_id, text=text)
-
-
-
 
     async def send_code(self, callback_data, user_id, users, client):
         message_id = callback_data.message.id
@@ -199,12 +198,13 @@ class NotRegistered:
                 text += f"\nПодсказка к паролю: \"{hint}\""
             setting.user_setting[f"{user_id}"]["menu_point"] = "cloud_password"
             await client.send_message(chat_id=chat_id, text=text)
-        except FloodWait as time:
+        except FloodWait as err:
             text = (f"Ты ввёл слишком много раз неправильный код авторизации и телеграм заморозил все попытки входа!\n"
-                    f"Ограничение снимется через \"{time}\" секунд.\nМы сбросили данные авторизации, возвращайся "
-                    f"когда пройдёт это время и снова запусти /start")
+                    f"Мы сбросили данные авторизации, возвращайся когда пройдёт это время и снова запусти /start\n"
+                    f"Telegram error: {err}")
             setting.user_setting[f"{user_id}"]["menu_point"] = ""
             await client.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup="")
+            await auth.remove_user_app(user_id)
 
     @staticmethod
     async def run_userbot(user_id, users, client):
